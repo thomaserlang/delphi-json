@@ -1,0 +1,33 @@
+{
+  "username": "thomas",
+  "name": "Thomas",
+  "photos": [
+    {
+      "title": "Photo 1",
+      "urls": {
+        "small": "http://example.com/photo1_small.jpg",
+        "large": "http://example.com/photo1_large.jpg"
+      }
+    },
+    {
+      "title": "Photo 2",
+      "urls": {
+        "small": "http://example.com/photo2_small.jpg",
+        "large": "http://example.com/photo2_large.jpg"
+      }
+    }
+  ],
+  "a_number": 123123,
+  "escape_text": "Some \"test\"",
+  "escape_path": "C:\\test\\test.txt",
+  "int_list": [
+    1,
+    2,
+    3
+  ],
+  "str_list": [
+    "1",
+    "2",
+    "3"
+  ]
+}
