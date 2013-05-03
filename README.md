@@ -12,7 +12,7 @@ I made this on a Friday, this is the first version.
 ## How it works
 All values are stored as a variant.
 
-It uses TList to keep track of rows and fields objects.
+It uses TList to keep track of row and field objects. Field names are being stored in a TStringList. 
 
 Enumerator are being used to make the for loop easy to write.
 It's possible to use "while" with "eof" and "next". 
