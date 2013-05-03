@@ -1,7 +1,7 @@
 # JSON parser for Delphi
 
 ## Why?
-Didn't like the other Delphi JSON parser out there.
+Didn't like the other Delphi JSON parsers out there.
 They seemed too complicated, for something as simple as JSON.
 
 So this is my go at it.
