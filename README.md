@@ -2,7 +2,7 @@
 
 ## Why?
 Didn't like the other Delphi JSON parsers out there.
-They seemed too complicated, for something as simple as JSON.
+They seemed too complicated for the simple task i had for JSON.
 
 So this is my go at it.
 
@@ -11,26 +11,14 @@ I made this on a Friday, this is the first version.
 
 ## How it works
 All values are stored as a variant.
+TList is used to keep track of row and field objects. Field names are being stored in a TStringList. 
 
-It uses TList to keep track of row and field objects. Field names are being stored in a TStringList. 
+Field value can be accessed in the following ways:
+- ``object.FieldByName('field').AsString``
+- ``object.Field[0].AsString``
+- ``object['field'].AsString``
 
-Enumerator are being used to make the for loop easy to write.
-It's possible to use "while" with "eof" and "next". 
-But i can't see why, since the for loop is so much cleaner.
-
-Fields in a JSON object, can be accesed with:
-- object.FieldByName('field').AsString
-- object.Field[0].AsString
-- object['field'].AsString
-
-"object['field']" is the prefered way of accessing the field value.
-A object in a object can be accessed with "object['field1']['field2']", quite simple.
-
-If the field value is a JSON object, then it can accessed it with:
-- for item in object.AsJSON
-- for item in object
-
-Both returns a TJSONItem.
+``object['field']`` is the prefered way of accessing the value.
 
 ## Examples
 
