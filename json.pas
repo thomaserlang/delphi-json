@@ -34,7 +34,7 @@ type
       function GetFieldByName(AName: string): TJSONItem;
     public
       constructor Create;
-      procedure Free;
+      destructor Destroy; override;
       function GetEnumerator: TJSONEnumerator;
       function FieldByName(AName: string): TJSONItem;
       property FieldByName_[AName: string]: TJSONItem read GetFieldByName; default;
@@ -59,7 +59,7 @@ type
       function GetLastField: TJSONItem;
     public
       constructor Create;
-      procedure Free;
+      destructor Destroy; override;
       function AddField(AField: TJSONItem): integer; overload;
       function AddField(AName: string): integer; overload;
       function AddField(AName: string; AField: TJSONItem): integer; overload;
@@ -102,7 +102,7 @@ type
       Parent: TJSON;
 
       constructor Create; overload;
-      procedure Free;
+      destructor Destroy; override;
 
       function GetEnumerator: TJSONEnumerator;
 
@@ -137,24 +137,27 @@ type
 
 implementation
 
+{$M+}
+{$TYPEINFO ON}
+
 { TJSONField }
 
 constructor TJSONItem.Create;
 begin
-  inherited;
   FIsList := false;
+  FObject := nil;
+end;
+
+destructor TJSONItem.Destroy;
+begin
+  if assigned(FObject) then
+    FObject.Free;
+  inherited;
 end;
 
 function TJSONItem.FieldByName(AName: string): TJSONItem;
 begin
   result := GetFieldByName(AName);
-end;
-
-procedure TJSONItem.Free;
-begin
-  inherited;
-  if assigned(FObject) then
-    FObject.Free;
 end;
 
 function TJSONItem.GetEnumerator: TJSONEnumerator;
@@ -257,6 +260,16 @@ begin
   self.Parent := Parent;
 end;
 
+destructor TJSON.Destroy;
+var
+  i: integer;
+begin
+  for i := 0 to FRows.Count - 1 do
+    TJSONRow(FRows.Items[i]).Free;
+  FRows.Free;
+  inherited;
+end;
+
 function TJSON.FieldByName(AName: string): TJSONItem;
 begin
   result := GetFieldByName(AName);
@@ -265,16 +278,6 @@ end;
 procedure TJSON.First;
 begin
   RowIndex := 0;
-end;
-
-procedure TJSON.Free;
-var
-  i: integer;
-begin
-  inherited;
-  for i := 0 to FRows.Count - 1 do
-    TJSONRow(FRows.Items[i]).Free;
-  FRows.Free;
 end;
 
 function TJSON.GetCurrentRow: TJSONRow;
@@ -323,7 +326,7 @@ var
   field, in_string: boolean;
   s: string;
   obj: TJSON;
-function removeQuotation(s: string): string;
+function removeQuotation(s: string): WideString;
 var
   _start, _end: string;
   len: integer;
@@ -372,7 +375,7 @@ begin
     if (a = '"') and (prev_a <> '\') then
       in_string := not in_string;
     prev_a := a;
-    if in_string or (a in [#9, #10, #13, ' ']) then
+    if in_string or (CharInSet(a, [#9, #10, #13, ' '])) then
       continue;
     case a of
       '{', '[':
@@ -497,22 +500,22 @@ begin
   FLastField := -1;
 end;
 
-function TJSONRow.FieldByName(AName: string): TJSONItem;
-begin
-  result := GetFieldByName(AName);
-end;
-
-procedure TJSONRow.Free;
+destructor TJSONRow.Destroy;
 var
   i: integer;
 begin
-  inherited; 
   FFieldNames.Free;
   for i := 0 to FFields.Count - 1 do
     TJSONItem(FFields[i]).Free;
   if assigned(FValue) then
     FValue.Free;
   FFields.Free;
+  inherited;
+end;
+
+function TJSONRow.FieldByName(AName: string): TJSONItem;
+begin
+  result := GetFieldByName(AName);
 end;
 
 function TJSONRow.GetFieldByIndex(AIndex: integer): TJSONItem;
