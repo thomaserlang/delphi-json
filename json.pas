@@ -5,7 +5,7 @@ unit json;
 
 interface
 
-uses Variants, Classes, SysUtils, generics.collections, IdDateTimeStamp, dialogs;
+uses Variants, Classes, SysUtils, generics.collections, IdDateTimeStamp;
 
 type
   TJSON = class;
