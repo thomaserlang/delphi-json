@@ -18,7 +18,7 @@
     }
   ],
   "a_number": 123123,
-  "escape_text": "Some \"test\"",
+  "escape_text": "Some \"test\" \\\\ \\u00e6=\u00e6",
   "escape_path": "C:\\test\\test.txt",
   "int_list": [
     1,
@@ -29,5 +29,6 @@
     "1",
     "2",
     "3"
-  ]
+  ],
+  "nullvalue": null
 }

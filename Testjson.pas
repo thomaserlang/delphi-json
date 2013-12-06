@@ -12,7 +12,7 @@ unit Testjson;
 interface
 
 uses
-  TestFramework, Variants, SysUtils, Classes, Dialogs, json;
+  TestFramework, Variants, SysUtils, Classes, Dialogs, json, windows, dateutils;
 
 type
   // Test methods for class TJSON
@@ -25,6 +25,8 @@ type
   published
     procedure TestUser;
     procedure TestUserList;
+    procedure TestListInListInList;
+    procedure TestEmptyList;
   end;
 
 var
@@ -53,40 +55,81 @@ begin
   end;
 end;
 
+procedure TestTJSON.TestEmptyList;
+begin
+  with TJSON.Parse(loadFile('test4.json')) do
+  begin
+    try
+      check(IsList = false);
+      check(assigned(_['empty'].ListItems) = true);
+      check(_['empty'].ListItems.count = 0);
+    finally
+      Free;
+    end;
+  end;
+  with TJSON.Parse(loadFile('test5.json')) do
+  begin
+    try
+      check(IsList = true);
+      check(assigned(ListItems) = true);
+      check(ListItems.count = 0, inttostr(ListItems.count));
+    finally
+      Free;
+    end;
+  end;
+end;
+
+procedure TestTJSON.TestListInListInList;
+begin
+  with TJSON.Parse(loadFile('test3.json')) do
+  begin
+    try
+      check(_[0].IsList = true);
+      check(_[0][0][0].AsString = 'list in a list in a list');
+    finally
+      Free;
+    end;
+  end;
+end;
+
 procedure TestTJSON.TestUser;
 var
-  photo, item, item_a: TJSONItem;
+  photo, item, item_a: TJSON;
   i: integer;
+  fmtSettings: TFormatSettings;
 begin
+  GetLocaleFormatSettings(GetSystemDefaultLCID, fmtSettings);
   with TJSON.Parse(loadFile('test1.json')) do
   begin
     try
-      Check(FieldByName('username').AsString = 'thomas', FieldByName('username').AsString);
+      Check(_['username'].AsString = 'thomas', _['username'].AsString);
       i := 0;
-      for photo in FieldByName('photos') do
+      for photo in _['photos'] do
       begin
         inc(i);
-        check(photo.Field[0].AsString = format('Photo %d', [i]), 'title is not '+format('Photo %d', [i]));
-        check(assigned(photo.FieldByName('urls')));
+        check(photo['title'].AsString = format('Photo %d', [i]), 'title is not '+format('Photo %d', [i]));
+        check(assigned(photo['urls']));
         check(photo['urls']['small'].AsString = format('http://example.com/photo%d_small.jpg', [i]), 'url is not '+format('http://example.com/photo%d_small.jpg', [i]));
-        check(photo.FieldByName('urls').FieldByName('large').AsString = format('http://example.com/photo%d_large.jpg', [i]), 'url is not '+format('http://example.com/photo%d_large.jpg', [i]));
+        check(photo['urls']['large'].AsString = format('http://example.com/photo%d_large.jpg', [i]), 'url is not '+format('http://example.com/photo%d_large.jpg', [i]));
       end;
       i := 0;
-      for item in FieldByName('int_list') do
+      for item in _['int_list'] do
       begin
         inc(i);
         check(item.AsInteger = i);
       end;
 
       i := 0;
-      for item in FieldByName('str_list') do
+      for item in _['str_list'] do
       begin
         inc(i);
         check(item.AsString = inttostr(i));
       end;
 
-      check(FieldByName('escape_text').AsString = 'Some "test"');
-      check(FieldByName('escape_path').AsString = 'C:\test\test.txt');
+      check(_['escape_text'].AsString = 'Some "test" \\ \u00e6=æ', format('%s is not Some "test" \\ \u00e6=æ', [_['escape_text'].AsString]));
+      check(_['escape_path'].AsString = 'C:\test\test.txt', format('%s is not C:\test\test.txt', [_['escape_path'].AsString]));
+
+      check(_['nullvalue'].AsString = '');
     finally
       Free;
     end;
@@ -96,12 +139,15 @@ end;
 procedure TestTJSON.TestUserList();
 var
   users: TJSON;
-  user: TJSONItem;
+  user: TJSON;
   i: integer;
+
+  u: TJSON;
 begin
   users := TJSON.Parse(loadFile('test2.json'));
   try
     i := 0;
+    check(users.ListItems.Count = 3, format('%d is not 3', [users.ListItems.Count]));
     for user in users do
     begin
       inc(i);

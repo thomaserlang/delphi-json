@@ -1,363 +1,235 @@
 ﻿// JSON Parser by Thomas Erlang - TESoft.dk
-// Version 0.1
+// Version 0.2
 
 unit json;
 
 interface
 
-uses Variants, Classes, SysUtils;
+uses Variants, Classes, SysUtils, generics.collections, IdDateTimeStamp, dialogs;
 
 type
   TJSON = class;
-  TJSONItem = class;
-  TJSONEnumerator = class;
-  TArrayOfTJSONField = array of TJSONItem;
 
-  TJSONItem = class(TObject)
-    private
-      FValue: variant;
-      FObject: TJSON;
-      FIsList: boolean; 
-      function readString(): string;
-      procedure writeString(AValue: string);
-      function readInteger(): integer;
-      procedure writeInteger(AValue: integer);
-      function readBoolean(): boolean;
-      procedure writeBoolean(AValue: boolean);
-      function readJSON(): TJSON;
-      procedure writeJSON(AValue: TJSON);
-      function readCurrency(): Currency;
-      procedure writeCurrency(AValue: Currency);
-      function readFloat(): Double;
-      procedure writeFloat(AValue: Double);
-      function GetFieldByIndex(AIndex: integer): TJSONItem;
-      function GetFieldByName(AName: string): TJSONItem;
+  TJSONItems = class(TDictionary<string,TJSON>)
     public
-      constructor Create;
       destructor Destroy; override;
-      function GetEnumerator: TJSONEnumerator;
-      function FieldByName(AName: string): TJSONItem;
-      property FieldByName_[AName: string]: TJSONItem read GetFieldByName; default;
-      property Field[AIndex: integer]: TJSONItem read GetFieldByIndex;
-      property AsVariant: variant read FValue write FValue;
-      property AsString: string read readString write writeString;
-      property AsInteger: integer read readInteger write writeInteger;
-      property AsBoolean: boolean read readBoolean write writeBoolean;
-      property AsJSON: TJSON read readJSON write writeJSON;
-      property AsCurrency: Currency read readCurrency write writeCurrency;
-      property AsFloat: Double read readFloat write writeFloat;
-  end;     
-
-  TJSONRow = class(TObject)
-    private
-      FFieldNames: TStringList;
-      FFields: TList;
-      FLastField: integer;
-      FValue: TJSONItem;
-      function GetFieldByIndex(AIndex: integer): TJSONItem;
-      function GetFieldByName(AName: string): TJSONItem;
-      function GetLastField: TJSONItem;
-    public
-      constructor Create;
-      destructor Destroy; override;
-      function AddField(AField: TJSONItem): integer; overload;
-      function AddField(AName: string): integer; overload;
-      function AddField(AName: string; AField: TJSONItem): integer; overload;
-      function FieldByName(AName: string): TJSONItem;
-      property FieldByName_[AName: string]: TJSONItem read GetFieldByName; default;
-      property Field[AIndex: integer]: TJSONItem read GetFieldByIndex;
-      property FieldNames: TStringList read FFieldNames;
-      property LastField: TJSONItem read GetLastField;
-      property Value: TJSONItem read FValue write FValue;
-    published     
-    
   end;
 
-  TJSONEnumerator = class(TObject)
-    private
-      FIndex: integer;
-      FJSON: TJSON;
+  TJSONListItems = class(TList<TJSON>)
     public
-      constructor Create(AJSON: TJSON);
-      function GetCurrent: TJSONItem;
-      function MoveNext: boolean;
-      property Current: TJSONItem read GetCurrent;
+      destructor Destroy; override;
   end;
 
   TJSON = class(TObject)
     private
-      FRows: TList;
-      FIndex: integer;
-      FEof, FBof: boolean;
-      FRowCount: integer;
+      FParent: TJSON;
       FIsList: boolean;
-
-      procedure UpdateIndex(AValue: integer);
-      function GetFieldByIndex(AIndex: integer): TJSONItem;
-      function GetFieldByName(AName: string): TJSONItem;
-      function readRows(AIndex: integer): TJSONRow;
-      function GetCurrentRow: TJSONRow;
-    protected
+      FValue: Variant;
+      FItems: TJSONItems;
+      FListItems: TJSONListItems;
+      FLastField: string;
+      function GetJSONByNameOrIndex(const AData: variant): TJSON;
+      function GetString: string;
+      function GetInteger: integer;
+      function GetBoolean: boolean;
+      function GetInt64: int64;
+      function GetDateTime: TDateTime;
     public
-      Parent: TJSON;
-
-      constructor Create; overload;
+      constructor Create(AParent: TJSON = nil);
       destructor Destroy; override;
+      function GetEnumerator: TList<TJSON>.TEnumerator;
+      class function Parse(const AJSON: string): TJSON;
 
-      function GetEnumerator: TJSONEnumerator;
-
-      property RowIndex: integer read FIndex write UpdateIndex;
-      property Eof: boolean read FEof;
-      property Bof: boolean read FBof;
-
-      procedure Next;
-      procedure Prev;
-      procedure First;
-      procedure Last;
-
-      procedure New;
-      procedure Remove;
-
-      function AddField(AName: string): integer;
-      function FieldByName(AName: string): TJSONItem; overload;
-      property FieldByName_[AName: string]: TJSONItem read GetFieldByName; default;
-      property Field[AIndex: integer]: TJSONItem read GetFieldByIndex;
-
-      property Row[AIndex: integer]: TJSONRow read readRows;
-      property Rows: TList read FRows;
-      property RowCount: integer read FRowCount;
-      property CurrentRow: TJSONRow read GetCurrentRow;
+      property Parent: TJSON read FParent;
       property IsList: boolean read FIsList;
-
-    published
-      constructor Create(Parent: TJSON); overload;
-      class function Parse(AJSON: string): TJSON;
-
+      property Items: TJSONItems read FItems;
+      property ListItems: TJSONListItems read FListItems;
+      property Value: Variant read FValue;
+      property AsString: string read GetString;
+      property AsInteger: integer read GetInteger;
+      property AsBoolean: boolean read GetBoolean;
+      property AsInt64: int64 read GetInt64;
+      property AsDateTime: TDateTime read GetDateTime;
+      property JSONByNameOrIndex[const AData: variant]: TJSON read GetJSONByNameOrIndex; default;
+      property _[const AData: variant]: TJSON read GetJSONByNameOrIndex;
   end;
 
+  EJSONUnknownFieldOrIndex = class(Exception);
+  EJSONParseError = class(Exception);
+
 implementation
+
+uses
+  XSBuiltIns;
 
 {$M+}
 {$TYPEINFO ON}
 
-{ TJSONField }
+{ TJSON }
 
-constructor TJSONItem.Create;
+constructor TJSON.Create(AParent: TJSON);
 begin
+  FParent := AParent;
   FIsList := false;
-  FObject := nil;
 end;
 
-destructor TJSONItem.Destroy;
+destructor TJSON.Destroy;
 begin
-  if assigned(FObject) then
-    FObject.Free;
+  if assigned(FListItems) then
+    FListItems.free;
+  if assigned(FItems) then
+    FItems.Free;
   inherited;
 end;
 
-function TJSONItem.FieldByName(AName: string): TJSONItem;
-begin
-  result := GetFieldByName(AName);
-end;
-
-function TJSONItem.GetEnumerator: TJSONEnumerator;
-begin
-  result :=  TJSONEnumerator.Create(AsJSON);
-end;
-
-function TJSONItem.GetFieldByIndex(AIndex: integer): TJSONItem;
-begin
-  result := AsJSON.Field[AIndex];
-end;
-
-function TJSONItem.GetFieldByName(AName: string): TJSONItem;
-begin
-  result := AsJSON.FieldByName(AName);
-end;
-
-function TJSONItem.readBoolean: boolean;
+function TJSON.GetBoolean: boolean;
 begin
   result := VarAsType(FValue, varBoolean);
 end;
 
-function TJSONItem.readCurrency: Currency;
+function TJSON.GetDateTime: TDateTime;
 begin
-  result := VarAsType(FValue, varCurrency);
+  with TXSDateTime.Create() do
+  try
+
+    XSToNative(VarToStr(FValue));
+    Result := AsDateTime;
+  finally
+    Free();
+  end;
 end;
 
-function TJSONItem.readFloat: Double;
+function TJSON.GetEnumerator: TList<TJSON>.TEnumerator;
 begin
-  result := VarAsType(FValue, varDouble);
+  result := FListItems.GetEnumerator;
 end;
 
-procedure TJSONItem.writeBoolean(AValue: boolean);
+function TJSON.GetInt64: int64;
 begin
-  FValue := AValue;
+  result := VarAsType(FValue, varInt64);
 end;
 
-procedure TJSONItem.writeCurrency(AValue: Currency);
-begin
-  FValue := AValue;
-end;
-
-procedure TJSONItem.writeFloat(AValue: Double);
-begin
-  FValue := AValue;
-end;
-
-function TJSONItem.readInteger: integer;
+function TJSON.GetInteger: integer;
 begin
   result := VarAsType(FValue, varInteger);
 end;
 
-function TJSONItem.readJSON: TJSON;
-begin
-  result := FObject;
-end;
-
-procedure TJSONItem.writeInteger(AValue: integer);
-begin
-  FValue := AValue;
-end;
-
-procedure TJSONItem.writeJSON(AValue: TJSON);
-begin
-  FObject := AValue;
-end;
-
-function TJSONItem.readString: string;
-begin
-  result := VarAsType(FValue, varString);
-end;
-
-procedure TJSONItem.writeString(AValue: string);
-begin
-  FValue := AValue;
-end;
-
-{ TJSON }
-
-function TJSON.AddField(AName: string): integer;
-begin
-  with TJSONRow(FRows.Items[FIndex]) do
-  begin
-    result := AddField(AName, TJSONItem.Create);
-  end;
-end;
-
-constructor TJSON.Create;
-begin
-  inherited;
-  FRows := TList.Create;   
-  RowIndex := -1;     
-  FIsList := false;
-end;
-
-constructor TJSON.Create(Parent: TJSON);
-begin
-  inherited Create;
-  self.Create;
-  self.Parent := Parent;
-end;
-
-destructor TJSON.Destroy;
+function TJSON.GetJSONByNameOrIndex(const AData: variant): TJSON;
 var
-  i: integer;
+  typestring: string;
 begin
-  for i := 0 to FRows.Count - 1 do
-    TJSONRow(FRows.Items[i]).Free;
-  FRows.Free;
-  inherited;
-end;
-
-function TJSON.FieldByName(AName: string): TJSONItem;
-begin
-  result := GetFieldByName(AName);
-end;
-
-procedure TJSON.First;
-begin
-  RowIndex := 0;
-end;
-
-function TJSON.GetCurrentRow: TJSONRow;
-begin
-  result := self.Row[self.RowIndex];
-end;
-
-function TJSON.GetEnumerator: TJSONEnumerator;
-begin
-  result := TJSONEnumerator.Create(self);
-end;
-
-function TJSON.GetFieldByIndex(AIndex: integer): TJSONItem;
-begin
-  with TJSONRow(FRows.Items[FIndex]) do
-  begin
-    result := Field[AIndex];
+  case VarType(AData) and VarTypeMask of
+    varString, varUString, varWord, varLongWord:
+      if not FItems.TryGetValue(AData, result) then
+        raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
+      else
+        exit;
+    varInteger, varInt64, varSmallint, varShortInt, varByte:
+    begin
+      if (FListItems.Count - 1) >= AData then
+      begin
+        result := FListItems.items[AData];
+        exit;
+      end
+      else
+        raise EJSONUnknownFieldOrIndex.Create(format('Unknown index: %d', [AData]));
+    end;
   end;
+  case VarType(AData) and VarTypeMask of
+    varEmpty     : typeString := 'varEmpty';
+    varNull      : typeString := 'varNull';
+    varSmallInt  : typeString := 'varSmallInt';
+    varInteger   : typeString := 'varInteger';
+    varSingle    : typeString := 'varSingle';
+    varDouble    : typeString := 'varDouble';
+    varCurrency  : typeString := 'varCurrency';
+    varDate      : typeString := 'varDate';
+    varOleStr    : typeString := 'varOleStr';
+    varDispatch  : typeString := 'varDispatch';
+    varError     : typeString := 'varError';
+    varBoolean   : typeString := 'varBoolean';
+    varVariant   : typeString := 'varVariant';
+    varUnknown   : typeString := 'varUnknown';
+    varByte      : typeString := 'varByte';
+    varWord      : typeString := 'varWord';
+    varLongWord  : typeString := 'varLongWord';
+    varInt64     : typeString := 'varInt64';
+    varStrArg    : typeString := 'varStrArg';
+    varString    : typeString := 'varString';
+    varAny       : typeString := 'varAny';
+    varTypeMask  : typeString := 'varTypeMask';
+  end;
+  raise EJSONUnknownFieldOrIndex.Create(format('Unknown field variant type: %s.', [varString]));
 end;
 
-function TJSON.GetFieldByName(AName: string): TJSONItem;
+function TJSON.GetString: string;
 begin
-  result := CurrentRow.FieldByName(AName);
+  if VarIsType(FValue, varNull) then
+    result := ''
+  else
+    result := VarAsType(FValue, varString);
 end;
 
-procedure TJSON.Last;
-begin
-  RowIndex := FRows.Count - 1;
-end;
-
-procedure TJSON.New;
-begin
-  inc(FRowCount);
-  RowIndex := FRows.Add(TJSONRow.Create);
-end;
-
-procedure TJSON.Next;
-begin
-  RowIndex := FIndex + 1;
-end;
-
-class function TJSON.Parse(AJSON: string): TJSON;
+class function TJSON.Parse(const AJSON: string): TJSON;
 var
   a, prev_a: char;
   i, tag: integer;
   field, in_string: boolean;
-  s: string;
-  obj: TJSON;
-function removeQuotation(s: string): WideString;
+  temp: string;
+  obj, temp_obj: TJSON;
+function unescape(const s: string): string;
 var
-  _start, _end: string;
-  len: integer;
+  prev, prev_prev: char;
+  ubuf, i, skip: integer;
+procedure append;
+begin
+  result := result + s[i];
+end;
 begin
   result := '';
-  len := length(s);
-  if len < 1 then
+  if s = 'null' then
     exit;
-  _start := s[1];
-  _end := s[len];
-  result := s;
-  if (_start = '"') and (_end = '"') then
+  skip := 0;
+  for i := 1 to Length(s) do
   begin
-    result := copy(s, 2, len-2);
-    result := StringReplace(
-      result,
-      '\"',
-      '"',
-      [rfReplaceAll]
-    );
-    result := StringReplace(
-      result,
-      '\\',
-      '\',
-      [rfReplaceAll]
-    );
+    if skip > 0 then
+    begin
+      Continue;
+      dec(skip);
+    end;
+    try
+      if (prev = '\') and (prev_prev <> '\') then
+      begin
+        case s[i] of
+          '\', '"': append;
+          'u':
+          begin
+            if not TryStrToInt('$' + copy(s, i+1, 4), ubuf) then
+              raise EJSONParseError.Create(format('Invalid unicode \u%s', [copy(s, i+1, 4)]));
+            result := result + WideChar(ubuf);
+            skip := 4;
+            Continue;
+          end;
+        end;
+      end
+      else
+        case s[i] of
+          '\', '"': continue;
+        else
+          append;
+        end;
+    finally
+      if (prev = '\') and (prev_prev = '\') then
+        prev_prev := #0
+      else
+        prev_prev := prev;
+      prev := s[i];
+    end;
   end;
 end;
-function get(): string;
+function get_value(): string;
 begin
-  result := removeQuotation(trim(copy(AJSON, tag, i-tag)));
+  result := unescape(trim(copy(AJSON, tag, i-tag)));
 end;
 begin
   i := 0;
@@ -366,7 +238,6 @@ begin
   prev_a := ' ';
   in_string := false;
   obj := nil;
-  s := '';
   for a in AJSON do
   begin
     inc(i);
@@ -378,190 +249,102 @@ begin
     if in_string or (CharInSet(a, [#9, #10, #13, ' '])) then
       continue;
     case a of
-      '{', '[':
+      '{':
       begin
         if obj = nil then
-          obj := TJSON.Create(nil)
-        else
+          obj := TJSON.Create(nil);
+        if obj.FIsList then
         begin
-          if not obj.IsList then
-          begin
-            obj.CurrentRow.LastField.AsJSON := TJSON.Create(obj);
-            if a = '[' then
-              obj.CurrentRow.LastField.AsString := '{JSON_LIST}'
-            else
-              obj.CurrentRow.LastField.AsString := '{JSON_OBJECT}';
-            obj := obj.CurrentRow.LastField.AsJSON;
-          end
-          else
-          begin
-            obj.CurrentRow.FValue := TJSONItem.Create;
-            obj.CurrentRow.FValue.AsJSON := TJSON.Create(obj);
-            obj.CurrentRow.FValue.AsString := '{JSON_OBJECT}';
-            obj := obj.CurrentRow.FValue.AsJSON;
-          end;
+          temp_obj := TJSON.Create(obj);
+          obj.FListItems.add(temp_obj);
+          obj := temp_obj;
         end;
-        if a = '[' then
-          obj.FIsList := true;
-        obj.New;
+        obj.FIsList := false;
+        obj.FItems := TJSONItems.Create;
+        obj.FValue := '{JSON_OBJECT}';
+        tag := 0;
+      end;
+      '[':
+      begin
+        if obj = nil then
+          obj := TJSON.Create(nil);
+        obj.FIsList := true;
+        obj.FListItems := TJSONListItems.Create;
+        obj.FValue := '{JSON_LIST}';
+        temp_obj := TJSON.Create(obj);
+        obj.FListItems.add(temp_obj);
+        obj := temp_obj;
+        obj.FValue := null;
         tag := 0;
       end;
       ':':
       begin
-        obj.AddField(get());
+        temp_obj := TJSON.Create(obj);
+        obj.FItems.add(get_value, temp_obj);
+        obj := temp_obj;
+        obj.FValue := null;
         tag := 0;
       end;
-      ',', '}', ']':
+      ',':
       begin
-        s := get();
-        if s <> '' then
+        temp := get_value();
+        if temp <> '' then
+          obj.FValue := temp;
+        if (obj.Parent <> nil) then
+          obj := obj.Parent;
+        tag := 0;
+      end;
+      '}', ']':
+      begin
+        temp := get_value();
+        if temp <> '' then
+          obj.FValue := temp;
+        if (obj.Parent <> nil) then
+          obj := obj.Parent;
+        if a = ']' then
         begin
-          if not obj.IsList then
-            obj.CurrentRow.LastField.AsString := s
-          else
-          begin
-            obj.CurrentRow.Value := TJSONItem.create;
-            obj.CurrentRow.Value.AsString := s
-          end;
-        end;
-        if (a = '}') or (a = ']') then
-        begin
-          if (obj.Parent <> nil) then
-          begin
-            obj.First;
-            obj := obj.Parent;
-          end;
-        end
-        else if (a = ',') and (obj.FIsList) then
-        begin
-          obj.New;
+          if assigned(obj.FListItems) then
+            if obj.FListItems.Count = 1 then
+            begin
+              // When first seeing a list we dont know yes if it contains anything.
+              // When at the end of list we check if the value has been set.
+              // If it hasn't, we'll remove the unused object
+              if (VarIsType(obj.FListItems[0].FValue, varNull)) and
+                 (not assigned(obj.FListItems[0].FItems)) and
+                 (not assigned(obj.FListItems[0].FListItems)) then
+              begin
+                obj.FListItems[0].Free;
+                obj.FListItems.Delete(0);
+              end;
+            end;
         end;
         tag := 0;
       end;
     end;
   end;
-  obj.First;
   result := obj;
 end;
 
-procedure TJSON.Prev;
-begin
-  RowIndex := FIndex - 1;
-end;
+{ TJSONItems }
 
-function TJSON.readRows(AIndex: integer): TJSONRow;
-begin
-  result := TJSONRow(FRows[AIndex]);
-end;
-
-procedure TJSON.Remove;
-begin
-  FRows.Delete(RowIndex);
-end;
-
-procedure TJSON.UpdateIndex(AValue: integer);
-begin
-  FIndex := AValue;  
-  if FIndex >= FRows.Count then
-    FEof := True
-  else
-    FEof := False;
-
-  if FIndex < 0 then
-    FBof := True
-  else
-    FBof := false;
-end;
-
-{ TJSONRows }
-
-function TJSONRow.AddField(AName: string; AField: TJSONItem): integer;
-begin
-  FFieldNames.Append(AName);
-  result := FFields.Add(AField);
-  FLastField := result;
-end;
-
-function TJSONRow.AddField(AField: TJSONItem): integer;
-begin
-  result := FFields.Add(AField);
-  FLastField := result;
-end;
-
-function TJSONRow.AddField(AName: string): integer;
-begin
-  FFieldNames.Append(AName);
-end;
-
-constructor TJSONRow.Create;
-begin
-  FFields := TList.Create;
-  FFieldNames := TStringList.Create;
-  FLastField := -1;
-end;
-
-destructor TJSONRow.Destroy;
+destructor TJSONItems.Destroy;
 var
-  i: integer;
+  item: TJSON;
 begin
-  FFieldNames.Free;
-  for i := 0 to FFields.Count - 1 do
-    TJSONItem(FFields[i]).Free;
-  if assigned(FValue) then
-    FValue.Free;
-  FFields.Free;
+  for item in self.Values do
+    item.Free;
   inherited;
 end;
 
-function TJSONRow.FieldByName(AName: string): TJSONItem;
-begin
-  result := GetFieldByName(AName);
-end;
+{ TJSONListItem }
 
-function TJSONRow.GetFieldByIndex(AIndex: integer): TJSONItem;
-begin
-  if (AIndex < FFields.Count) and (AIndex <> -1) then
-    result := FFields.Items[AIndex]
-  else
-    raise Exception.Create('Unknown Field');
-end;
-
-function TJSONRow.GetFieldByName(AName: string): TJSONItem;
+destructor TJSONListItems.Destroy;
 var
-  i: integer;
+  item: TJSON;
 begin
-  i := FFieldNames.IndexOf(AName);
-  if i <> -1 then
-    result := FFields[i]
-  else
-    raise Exception.Create(format('Unknown field: %s', [AName]));
-end;
-
-function TJSONRow.GetLastField: TJSONItem;
-begin
-  if self.FLastField > -1 then
-    result := self.FFields[self.FLastField];
-end;
-
-{ TJSONEnumerate }
-
-constructor TJSONEnumerator.Create(AJSON: TJSON);
-begin
-  Inherited Create;
-  FIndex := -1;
-  FJSON := AJSON;
-end;
-
-function TJSONEnumerator.GetCurrent: TJSONItem;
-begin
-  result := FJSON.Row[FIndex].FValue;
-end;
-
-function TJSONEnumerator.MoveNext: boolean;
-begin
-  result := FIndex < (FJSON.RowCount - 1);
-  if result then
-    inc(FIndex);
+  for item in self do
+    item.Free;
+  inherited;
 end;
 
 initialization

@@ -15,6 +15,11 @@ program PjtTestJSON;
 {$ENDIF}
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   DUnitTestRunner,
   Testjson in 'Testjson.pas',
   json in 'json.pas';
