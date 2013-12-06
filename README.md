@@ -6,8 +6,16 @@ They seemed too complicated for the simple task i had for JSON.
 
 So this is my go at it.
 
-###Be aware!
-I made this on a Friday, this is the first version.
+### New in version 0.2
+
+  - Rewrote the whole thing to use TDictionary.
+  - Added support for decoding unicode encoded characters.
+  - Added support for datetime (must be specified in ISO 8601 for it to work!).
+
+### What is missing
+
+  - A better way to handle null values.
+  - Exception if the JSON text is not valid.
 
 ## Examples
 
