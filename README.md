@@ -9,17 +9,6 @@ So this is my go at it.
 ###Be aware!
 I made this on a Friday, this is the first version.
 
-## How it works
-All values are stored as a variant.
-TList is used to keep track of row and field objects. Field names are being stored in a TStringList. 
-
-Field value can be accessed in the following ways:
-- ``object.FieldByName('field').AsString``
-- ``object.Field[0].AsString``
-- ``object['field'].AsString``
-
-``object['field']`` is the prefered way of accessing the value.
-
 ## Examples
 
 ### Example 1 - User
@@ -53,28 +42,29 @@ Field value can be accessed in the following ways:
   
 #### Delphi 
     var
-      json: TJSON;
-      item: TJSONItem;
+      user: TJSON;
+      photo: TJSON;
+      i: TJSON;
     begin
       json := TJSON.parse({JSON_TEXT});
       try
-        writeln('Username: '+ json['username'].AsString);
-        writeln('Name: '+ json['name'].AsString);
+        writeln('Username: '+ user['username'].AsString);
+        writeln('Name: '+ user['name'].AsString);
         // Photos
-        for item in json['photos'] do
+        for photo in json['photos'] do
         begin
-          writeln('Title: ' + item['title'].AsString);
-          writeln('Small url: ' + item['urls']['small'].AsString);
-          writeln('Large url: ' + item['urls']['large'].AsString);
+          writeln('Title: ' + photo['title'].AsString);
+          writeln('Small url: ' + photo['urls']['small'].AsString);
+          writeln('Large url: ' + photo['urls']['large'].AsString);
         end;
   
         // Int list
-        for item in json['int_list'] do
+        for i in user['int_list'] do
         begin
-          writeln(item.AsInteger);
+          writeln(i.AsInteger);
         end;
       finally
-        json.free;
+        user.free;
       end;
     end;
     
@@ -98,7 +88,7 @@ Field value can be accessed in the following ways:
 #### Delphi
     var
       users: TJSON;
-      user: TJSONItem;
+      user: TJSON;
     begin
       users := TJSON.Parse({JSON_TEXT});
       try
@@ -108,7 +98,7 @@ Field value can be accessed in the following ways:
           writeln(user['name'].AsString);
         end;
       finally
-        json.Free;
+        users.Free;
       end;
     end;
     
