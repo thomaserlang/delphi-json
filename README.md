@@ -21,6 +21,8 @@ This version is only tested on Delphi XE 3 but should work in all Delphi version
 
 ## Examples
 
+Just include the json.pas file in your uses list for this to work.
+
 ### Example 1 - User
 
 #### JSON
