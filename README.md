@@ -6,7 +6,7 @@ They seemed too complicated for the simple task i had for JSON.
 
 So this is my go at it.
 
-This version is only tested in Delphi XE 3 but should work in all Delphi versions that support generics.
+This version is only tested on Delphi XE 3 but should work in all Delphi versions that support generics.
 
 ### New in version 0.2
 
