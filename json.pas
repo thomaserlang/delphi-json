@@ -1,11 +1,32 @@
-﻿// JSON Parser by Thomas Erlang - TESoft.dk
-// Version 0.2
+﻿{
+The MIT License (MIT)
+
+Copyright (c) 2014 Thomas Erlang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+}
 
 unit json;
 
 interface
 
-uses Variants, Classes, SysUtils, generics.collections, IdDateTimeStamp;
+uses Variants, Classes, SysUtils, generics.collections;
 
 type
   TJSON = class;
@@ -91,7 +112,6 @@ function TJSON.GetDateTime: TDateTime;
 begin
   with TXSDateTime.Create() do
   try
-
     XSToNative(VarToStr(FValue));
     Result := AsDateTime;
   finally
@@ -120,7 +140,7 @@ var
 begin
   case VarType(AData) and VarTypeMask of
     varString, varUString, varWord, varLongWord:
-      if not FItems.TryGetValue(AData, result) then
+      if not FItems.TryGetValue(VartoStr(AData), result) then
         raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
       else
         exit;
@@ -128,7 +148,7 @@ begin
     begin
       if (FListItems.Count - 1) >= AData then
       begin
-        result := FListItems.items[AData];
+        result := FListItems.items[Integer(AData)];
         exit;
       end
       else
@@ -306,7 +326,7 @@ begin
           if assigned(obj.FListItems) then
             if obj.FListItems.Count = 1 then
             begin
-              // When first seeing a list we dont know yes if it contains anything.
+              // When first seeing a list we dont know if it contains anything.
               // When at the end of list we check if the value has been set.
               // If it hasn't, we'll remove the unused object
               if (VarIsType(obj.FListItems[0].FValue, varNull)) and
