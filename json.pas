@@ -224,8 +224,8 @@ begin
           '\', '"': append;
           'u':
           begin
-            if not TryStrToInt('$' + copy(s, i+2, 4), ubuf) then
-              raise EJSONParseError.Create(format('Invalid unicode \u%s', [copy(s, i+2, 4)]));
+            if not TryStrToInt('$' + s.Substring(i+1, 4), ubuf) then
+              raise EJSONParseError.Create(format('Invalid unicode \u%s', [s.Substring(i+1, 4)]));
             result := result + WideChar(ubuf);
             skip := 4;
             Continue;
@@ -249,7 +249,7 @@ begin
 end;
 function get_value(): string;
 begin
-  result := unescape(trim(copy(AJSON, tag, i-tag)));
+  result := unescape(trim(AJSON.Substring(tag, i-tag-1)));
 end;
 begin
   i := 0;
