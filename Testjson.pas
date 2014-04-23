@@ -56,6 +56,8 @@ begin
 end;
 
 procedure TestTJSON.TestEmptyList;
+var
+  j: TJSON;
 begin
   with TJSON.Parse(loadFile('test4.json')) do
   begin

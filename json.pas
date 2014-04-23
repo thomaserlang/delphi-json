@@ -26,7 +26,7 @@ unit json;
 
 interface
 
-uses Variants, Classes, SysUtils, generics.collections;
+uses System.SysUtils, System.Classes, System.Variants, generics.collections;
 
 type
   TJSON = class;
@@ -140,7 +140,7 @@ var
 begin
   case VarType(AData) and VarTypeMask of
     varString, varUString, varWord, varLongWord:
-      if not FItems.TryGetValue(VartoStr(AData), result) then
+      if not FItems.TryGetValue(AData, result) then
         raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
       else
         exit;
@@ -148,7 +148,7 @@ begin
     begin
       if (FListItems.Count - 1) >= AData then
       begin
-        result := FListItems.items[Integer(AData)];
+        result := FListItems.items[AData];
         exit;
       end
       else
@@ -187,7 +187,7 @@ begin
   if VarIsType(FValue, varNull) then
     result := ''
   else
-    result := VarAsType(FValue, varString);
+    result := VarToStr(FValue);
 end;
 
 class function TJSON.Parse(const AJSON: string): TJSON;
@@ -203,14 +203,14 @@ var
   ubuf, i, skip: integer;
 procedure append;
 begin
-  result := result + s[i];
+  result := result + s.chars[i];
 end;
 begin
   result := '';
   if s = 'null' then
     exit;
   skip := 0;
-  for i := 1 to Length(s) do
+  for i := 0 to s.Length - 1 do
   begin
     if skip > 0 then
     begin
@@ -220,12 +220,12 @@ begin
     try
       if (prev = '\') and (prev_prev <> '\') then
       begin
-        case s[i] of
+        case s.chars[i] of
           '\', '"': append;
           'u':
           begin
-            if not TryStrToInt('$' + copy(s, i+1, 4), ubuf) then
-              raise EJSONParseError.Create(format('Invalid unicode \u%s', [copy(s, i+1, 4)]));
+            if not TryStrToInt('$' + copy(s, i+2, 4), ubuf) then
+              raise EJSONParseError.Create(format('Invalid unicode \u%s', [copy(s, i+2, 4)]));
             result := result + WideChar(ubuf);
             skip := 4;
             Continue;
@@ -233,7 +233,7 @@ begin
         end;
       end
       else
-        case s[i] of
+        case s.chars[i] of
           '\', '"': continue;
         else
           append;
@@ -243,7 +243,7 @@ begin
         prev_prev := #0
       else
         prev_prev := prev;
-      prev := s[i];
+      prev := s.chars[i];
     end;
   end;
 end;
