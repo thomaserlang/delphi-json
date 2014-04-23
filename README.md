@@ -6,7 +6,7 @@ They seemed too complicated for the simple task i had for JSON.
 
 So this is my go at it.
 
-This version is only tested on Delphi XE 3 but should work in all Delphi versions that support generics.
+This version is only tested on Delphi XE 3 and Delphi XE 6 (Android) but should work in all Delphi versions that support generics and TStringHelper.
 
 ### New in version 0.2
 
@@ -18,6 +18,8 @@ This version is only tested on Delphi XE 3 but should work in all Delphi version
 
   - A better way to handle null values.
   - Exception if the JSON text is not valid.
+  - Convert to string
+  - Serialization and deserialization from/to objects.
 
 ## Examples
 
