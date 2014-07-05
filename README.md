@@ -68,7 +68,7 @@ begin
     writeln('Username: '+ user['username'].AsString);
     writeln('Name: '+ user['name'].AsString);
     // Photos
-    for photo in json['photos'] do
+    for photo in user['photos'] do
     begin
       writeln('Title: ' + photo['title'].AsString);
       writeln('Small url: ' + photo['urls']['small'].AsString);
