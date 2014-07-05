@@ -63,7 +63,7 @@ var
   photo: TJSON;
   i: TJSON;
 begin
-  json := TJSON.parse({JSON_TEXT});
+  user := TJSON.parse({JSON_TEXT});
   try
     writeln('Username: '+ user['username'].AsString);
     writeln('Name: '+ user['name'].AsString);
