@@ -27,6 +27,7 @@ type
     procedure TestUserList;
     procedure TestListInListInList;
     procedure TestEmptyList;
+    procedure TestMovie;
   end;
 
 var
@@ -91,6 +92,20 @@ begin
     finally
       Free;
     end;
+  end;
+end;
+
+procedure TestTJSON.TestMovie;
+begin
+  with TJSON.Parse(loadFile('test6.json')) do
+  try
+    check(_['page'].AsInteger = 1);
+    check(_['results'][0]['id'].AsInteger = 262543);
+    check(_['results'][0]['id'].AsString = '262543');
+    check(_['results'][0]['original_title'].AsString = 'Automata');
+    check(_['results'][0]['popularity'].AsString = '6.6273989934368');
+  finally
+    free;
   end;
 end;
 

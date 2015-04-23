@@ -249,7 +249,7 @@ begin
 end;
 function get_value(): string;
 begin
-  result := unescape(trim(AJSON.Substring(tag, i-tag-1)));
+  result := unescape(trim(AJSON.Substring(tag-1, i-tag)));
 end;
 begin
   i := 0;
