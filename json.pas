@@ -78,6 +78,9 @@ type
   EJSONUnknownFieldOrIndex = class(Exception);
   EJSONParseError = class(Exception);
 
+var
+  DJSONFormatSettings: TFormatSettings;
+
 implementation
 
 uses
@@ -109,14 +112,23 @@ begin
 end;
 
 function TJSON.GetDateTime: TDateTime;
+// TODO: Make a better date/time parser
+var
+  d: string;
 begin
-  with TXSDateTime.Create() do
-  try
-    XSToNative(VarToStr(FValue));
-    Result := AsDateTime;
-  finally
-    Free();
-  end;
+  d := VarToStr(FValue);
+  if length(d) = 10 then // date
+    result := StrToDate(d, DJSONFormatSettings)
+  else if length(d) = 8 then // time
+    result := StrToTime(d, DJSONFormatSettings)
+  else
+    with TXSDateTime.Create() do
+    try
+      XSToNative(d);
+      Result := AsDateTime;
+    finally
+      Free();
+    end;
 end;
 
 function TJSON.GetEnumerator: TList<TJSON>.TEnumerator;
@@ -369,5 +381,16 @@ begin
 end;
 
 initialization
+
+  DJSONFormatSettings := TFormatsettings.Create;
+  with DJSONFormatSettings do
+  begin
+    DateSeparator := '-';
+    TimeSeparator := ':';
+    ShortDateFormat := 'yyyy-mm-dd';
+    LongDateFormat := 'yyyy-mm-dd';
+    ShortTimeFormat := 'hh:nn:ss';
+    LongTimeFormat := 'hh:nn:ss';
+  end;
 
 end.
