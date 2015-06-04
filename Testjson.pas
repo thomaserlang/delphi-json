@@ -120,26 +120,24 @@ begin
   begin
     try
       Check(_['username'].AsString = 'thomas', _['username'].AsString);
-      i := 0;
-      for photo in _['photos'] do
+      for i in [1,2] do
       begin
-        inc(i);
+        photo := _['photos'][i-1];
         check(photo['title'].AsString = format('Photo %d', [i]), 'title is not '+format('Photo %d', [i]));
         check(assigned(photo['urls']));
         check(photo['urls']['small'].AsString = format('http://example.com/photo%d_small.jpg', [i]), 'url is not '+format('http://example.com/photo%d_small.jpg', [i]));
         check(photo['urls']['large'].AsString = format('http://example.com/photo%d_large.jpg', [i]), 'url is not '+format('http://example.com/photo%d_large.jpg', [i]));
       end;
-      i := 0;
-      for item in _['int_list'] do
+
+      for i in [1,2,3] do
       begin
-        inc(i);
+        item := _['int_list'][i-1];
         check(item.AsInteger = i);
       end;
 
-      i := 0;
-      for item in _['str_list'] do
+      for i in [1,2,3] do
       begin
-        inc(i);
+        item := _['str_list'][i-1];
         check(item.AsString = inttostr(i));
       end;
 
@@ -163,15 +161,14 @@ var
 begin
   users := TJSON.Parse(loadFile('test2.json'));
   try
-    i := 0;
     check(users.ListItems.Count = 3, format('%d is not 3', [users.ListItems.Count]));
-    for user in users do
+    for i in [0,1,2] do
     begin
-      inc(i);
+      user := users[i];
       case i of
-        1: check(user['username'].AsString = 'thomas', user['username'].AsString+' is not thomas');
-        2: check(user['name'].AsString = 'Kurt', user['name'].AsString+' is not kurt');
-        3: check(user['username'].AsString = 'bent', user['username'].AsString+' is not bent');
+        0: check(user['username'].AsString = 'thomas', user['username'].AsString+' is not thomas');
+        1: check(user['name'].AsString = 'Kurt', user['name'].AsString+' is not kurt');
+        2: check(user['username'].AsString = 'bent', user['username'].AsString+' is not bent');
       end;
     end;
   finally

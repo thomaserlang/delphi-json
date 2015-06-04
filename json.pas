@@ -26,7 +26,7 @@ unit json;
 
 interface
 
-uses System.SysUtils, System.Classes, System.Variants, generics.collections;
+uses System.SysUtils, System.Classes, System.Variants, generics.collections, dialogs;
 
 type
   TJSON = class;
@@ -273,12 +273,6 @@ begin
       begin
         if obj = nil then
           obj := TJSON.Create(nil);
-        if obj.FIsList then
-        begin
-          temp_obj := TJSON.Create(obj);
-          obj.FListItems.add(temp_obj);
-          obj := temp_obj;
-        end;
         obj.FIsList := false;
         obj.FItems := TJSONItems.Create;
         obj.FValue := '{JSON_OBJECT}';
@@ -312,6 +306,13 @@ begin
           obj.FValue := temp;
         if (obj.Parent <> nil) then
           obj := obj.Parent;
+        if obj.FIsList then
+        begin
+          temp_obj := TJSON.Create(obj);
+          obj.FListItems.add(temp_obj);
+          obj := temp_obj;
+          obj.FValue := null;
+        end;
         tag := 0;
       end;
       '}', ']':
