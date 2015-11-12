@@ -226,8 +226,8 @@ begin
   begin
     if skip > 0 then
     begin
-      Continue;
       dec(skip);
+      Continue;
     end;
     try
       if (prev = '\') and (prev_prev <> '\') then

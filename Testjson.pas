@@ -28,6 +28,7 @@ type
     procedure TestListInListInList;
     procedure TestEmptyList;
     procedure TestMovie;
+    procedure TestUnicodeUnEscape;
   end;
 
 var
@@ -104,6 +105,16 @@ begin
     check(_['results'][0]['id'].AsString = '262543');
     check(_['results'][0]['original_title'].AsString = 'Automata');
     check(_['results'][0]['popularity'].AsString = '6.6273989934368');
+  finally
+    free;
+  end;
+end;
+
+procedure TestTJSON.TestUnicodeUnEscape;
+begin
+  with TJSON.Parse('{"name": "Kurt \u00e6 bc"}') do
+  try
+    check(_['name'].AsString = 'Kurt æ bc');
   finally
     free;
   end;
