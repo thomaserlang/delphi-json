@@ -28,7 +28,7 @@ type
     procedure TestListInListInList;
     procedure TestEmptyList;
     procedure TestMovie;
-    procedure TestUnicodeUnEscape;
+    procedure TestUnEscape;
   end;
 
 var
@@ -110,11 +110,41 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestUnicodeUnEscape;
+procedure TestTJSON.TestUnEscape;
 begin
   with TJSON.Parse('{"name": "Kurt \u00e6 bc"}') do
   try
     check(_['name'].AsString = 'Kurt æ bc');
+  finally
+    free;
+  end;
+  with TJSON.Parse('{"name": "a \b b"}') do
+  try
+    check(_['name'].AsString = 'a '+#8+' b');
+  finally
+    free;
+  end;
+  with TJSON.Parse('{"name": "a \n b"}') do
+  try
+    check(_['name'].AsString = 'a '+#10+' b');
+  finally
+    free;
+  end;
+  with TJSON.Parse('{"name": "a \r b"}') do
+  try
+    check(_['name'].AsString = 'a '+#13+' b');
+  finally
+    free;
+  end;
+  with TJSON.Parse('{"name": "a \t b"}') do
+  try
+    check(_['name'].AsString = 'a '+#9+' b');
+  finally
+    free;
+  end;
+  with TJSON.Parse('{"name": "a \f b"}') do
+  try
+    check(_['name'].AsString = 'a '+#12+' b');
   finally
     free;
   end;

@@ -242,6 +242,11 @@ begin
             skip := 4;
             Continue;
           end;
+          'b': result := result + #8;
+          'n': result := result + #10;
+          'r': result := result + #13;
+          't': result := result + #9;
+          'f': result := result + #12;
         end;
       end
       else
