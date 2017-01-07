@@ -206,7 +206,7 @@ class function TJSON.Parse(const AJSON: string): TJSON;
 var
   a, prev_a: char;
   i, tag: integer;
-  field, in_string: boolean;
+  field, in_string, escaped: boolean;
   temp: string;
   obj, temp_obj: TJSON;
 function unescape(const s: string): string;
@@ -274,13 +274,15 @@ begin
   field := false;
   prev_a := ' ';
   in_string := false;
+  escaped := false;
   obj := nil;
   for a in AJSON do
   begin
     inc(i);
     if tag = 0 then
       tag := i;
-    if (a = '"') and (prev_a <> '\') then
+    escaped := (prev_a = '\') and (not escaped);
+    if (a = '"') and (not escaped) then
       in_string := not in_string;
     prev_a := a;
     if in_string or (CharInSet(a, [#9, #10, #13, ' '])) then
