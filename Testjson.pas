@@ -148,6 +148,13 @@ begin
   finally
     free;
   end;
+
+  with TJSON.Parse('{"name": "\\"}') do
+  try
+    check(_['name'].AsString = '\');
+  finally
+    free;
+  end;
 end;
 
 procedure TestTJSON.TestUser;
