@@ -33,4 +33,5 @@
   "nullvalue": null,
   "null_list": [null],
   "emptyList": [],
+  "emptyStringList": [""],
 }

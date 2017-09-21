@@ -213,6 +213,7 @@ begin
 
       check(_['null_list'].ListItems.Count = 1, format('null_list count is not 1: %d', [_['null_list'].ListItems.Count]));
       check(_['emptyList'].ListItems.Count = 0, format('emptyList is not empty: %d', [_['null_list'].ListItems.Count]));
+      check(_['emptyStringList'].ListItems.Count = 1, format('emptyStringList count is not 1: %d', [_['emptyStringList'].ListItems.Count]));
 
     finally
       Free;

@@ -197,6 +197,8 @@ var
     result := unassigned;
     if s.ToLower = 'null' then
       exit(null);
+    if s = '""' then
+      exit('');
     resultS := '';
     skip := 0;
     for i := 0 to s.Length - 1 do
