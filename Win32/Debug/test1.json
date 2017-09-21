@@ -30,5 +30,7 @@
     "2",
     "3"
   ],
-  "nullvalue": null
+  "nullvalue": null,
+  "null_list": [null],
+  "emptyList": [],
 }

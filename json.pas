@@ -167,31 +167,7 @@ begin
         raise EJSONUnknownFieldOrIndex.Create(format('Unknown index: %d', [AData]));
     end;
   end;
-  case VarType(AData) and VarTypeMask of
-    varEmpty     : typeString := 'varEmpty';
-    varNull      : typeString := 'varNull';
-    varSmallInt  : typeString := 'varSmallInt';
-    varInteger   : typeString := 'varInteger';
-    varSingle    : typeString := 'varSingle';
-    varDouble    : typeString := 'varDouble';
-    varCurrency  : typeString := 'varCurrency';
-    varDate      : typeString := 'varDate';
-    varOleStr    : typeString := 'varOleStr';
-    varDispatch  : typeString := 'varDispatch';
-    varError     : typeString := 'varError';
-    varBoolean   : typeString := 'varBoolean';
-    varVariant   : typeString := 'varVariant';
-    varUnknown   : typeString := 'varUnknown';
-    varByte      : typeString := 'varByte';
-    varWord      : typeString := 'varWord';
-    varLongWord  : typeString := 'varLongWord';
-    varInt64     : typeString := 'varInt64';
-    varStrArg    : typeString := 'varStrArg';
-    varString    : typeString := 'varString';
-    varAny       : typeString := 'varAny';
-    varTypeMask  : typeString := 'varTypeMask';
-  end;
-  raise EJSONUnknownFieldOrIndex.Create(format('Unknown field variant type: %s.', [varString]));
+  raise EJSONUnknownFieldOrIndex.Create(format('Unknown field variant type: %s.', [VarTypeAsText(AData)]));
 end;
 
 function TJSON.GetString: string;
@@ -204,88 +180,88 @@ end;
 
 class function TJSON.Parse(const AJSON: string): TJSON;
 var
-  a, prev_a: char;
-  i, tag: integer;
-  field, in_string, escaped: boolean;
-  temp: string;
-  obj, temp_obj: TJSON;
-function unescape(const s: string): string;
-var
-  prev, prev_prev: char;
-  ubuf, i, skip: integer;
-procedure append;
-begin
-  result := result + s.chars[i];
-end;
-begin
-  result := '';
-  if s = 'null' then
-    exit;
-  skip := 0;
-  for i := 0 to s.Length - 1 do
+  a, prevA: char;
+  index, tag: integer;
+  field, inString, escaped: boolean;
+  temp: variant;
+  obj, tempObj: TJSON;
+
+  function getValue: variant;
+  var
+    prev, prevPrev: char;
+    ubuf, i, skip: integer;
+    s: string;
+    resultS: string;
   begin
-    if skip > 0 then
+    s := trim(AJSON.Substring(tag-1, index-tag));
+    result := unassigned;
+    if s.ToLower = 'null' then
+      exit(null);
+    resultS := '';
+    skip := 0;
+    for i := 0 to s.Length - 1 do
     begin
-      dec(skip);
-      Continue;
-    end;
-    try
-      if (prev = '\') and (prev_prev <> '\') then
+      if skip > 0 then
       begin
-        case s.chars[i] of
-          '\', '"': append;
-          'u':
-          begin
-            if not TryStrToInt('$' + s.Substring(i+1, 4), ubuf) then
-              raise EJSONParseError.Create(format('Invalid unicode \u%s', [s.Substring(i+1, 4)]));
-            result := result + WideChar(ubuf);
-            skip := 4;
-            Continue;
+        dec(skip);
+        Continue;
+      end;
+      try
+        if (prev = '\') and (prevPrev <> '\') then
+        begin
+          case s.chars[i] of
+            '\', '"': resultS := resultS + s.chars[i];
+            'u':
+            begin
+              if not TryStrToInt('$' + s.Substring(i+1, 4), ubuf) then
+                raise EJSONParseError.Create(format('Invalid unicode \u%s', [s.Substring(i+1, 4)]));
+              resultS := resultS + WideChar(ubuf);
+              skip := 4;
+              Continue;
+            end;
+            'b': resultS := resultS + #8;
+            'n': resultS := resultS + #10;
+            'r': resultS := resultS + #13;
+            't': resultS := resultS + #9;
+            'f': resultS := resultS + #12;
           end;
-          'b': result := result + #8;
-          'n': result := result + #10;
-          'r': result := result + #13;
-          't': result := result + #9;
-          'f': result := result + #12;
-        end;
-      end
-      else
-        case s.chars[i] of
-          '\', '"': continue;
+        end
         else
-          append;
-        end;
-    finally
-      if (prev = '\') and (prev_prev = '\') then
-        prev_prev := #0
-      else
-        prev_prev := prev;
-      prev := s.chars[i];
+          case s.chars[i] of
+            '\', '"': continue;
+          else
+            resultS := resultS + s.chars[i];
+          end;
+      finally
+        if (prev = '\') and (prevPrev = '\') then
+          prevPrev := #0
+        else
+          prevPrev := prev;
+        prev := s.chars[i];
+      end;
     end;
+    if resultS <> '' then
+      result := resultS;
   end;
-end;
-function get_value(): string;
+
 begin
-  result := unescape(trim(AJSON.Substring(tag-1, i-tag)));
-end;
-begin
-  i := 0;
+  index := 0;
   tag := 0;
   field := false;
-  prev_a := ' ';
-  in_string := false;
+  prevA := ' ';
+  inString := false;
   escaped := false;
   obj := nil;
   for a in AJSON do
   begin
-    inc(i);
+    inc(index);
     if tag = 0 then
-      tag := i;
-    escaped := (prev_a = '\') and (not escaped);
+      tag := index;
+    escaped := (prevA = '\') and (not escaped);
     if (a = '"') and (not escaped) then
-      in_string := not in_string;
-    prev_a := a;
-    if in_string or (CharInSet(a, [#9, #10, #13, ' '])) then
+      inString := not inString;
+    prevA := a;
+    if inString or (CharInSet(a, [#9, #10, #13, ' '])) then
       continue;
     case a of
       '{':
@@ -294,7 +270,7 @@ begin
           obj := TJSON.Create(nil);
         obj.FIsList := false;
         obj.FItems := TJSONItems.Create;
-        obj.FValue := '{JSON_OBJECT}';
+        obj.FValue := Unassigned;
         tag := 0;
       end;
       '[':
@@ -303,60 +279,65 @@ begin
           obj := TJSON.Create(nil);
         obj.FIsList := true;
         obj.FListItems := TJSONListItems.Create;
-        obj.FValue := '{JSON_LIST}';
-        temp_obj := TJSON.Create(obj);
-        obj.FListItems.add(temp_obj);
-        obj := temp_obj;
-        obj.FValue := null;
+        obj.FValue := Unassigned;
+        tempObj := TJSON.Create(obj);
+        obj.FListItems.add(tempObj);
+        obj := tempObj;
+        obj.FValue := Unassigned;
         tag := 0;
       end;
       ':':
       begin
-        temp_obj := TJSON.Create(obj);
-        obj.FItems.add(get_value, temp_obj);
-        obj := temp_obj;
+        tempObj := TJSON.Create(obj);
+        obj.FItems.add(getValue, tempObj);
+        obj := tempObj;
         obj.FValue := null;
         tag := 0;
       end;
       ',':
       begin
-        temp := get_value();
-        if temp <> '' then
+        temp := getValue();
+        if not VarIsEmpty(temp) then
           obj.FValue := temp;
         if (obj.Parent <> nil) then
           obj := obj.Parent;
         if obj.FIsList then
         begin
-          temp_obj := TJSON.Create(obj);
-          obj.FListItems.add(temp_obj);
-          obj := temp_obj;
-          obj.FValue := null;
+          tempObj := TJSON.Create(obj);
+          obj.FListItems.add(tempObj);
+          obj := tempObj;
+          obj.FValue := Unassigned;
         end;
         tag := 0;
       end;
-      '}', ']':
+      '}':
       begin
-        temp := get_value();
-        if temp <> '' then
+        temp := getValue();
+        if not VarIsEmpty(temp) then
+          obj.FValue := temp;
+        if (obj.Parent <> nil) and not (assigned(obj.FItems) and (obj.FItems.Count = 0)) then
+          obj := obj.Parent;
+        tag := 0;
+      end;
+      ']':
+      begin
+        temp := getValue();
+        if not VarIsEmpty(temp) then
           obj.FValue := temp;
         if (obj.Parent <> nil) then
           obj := obj.Parent;
-        if a = ']' then
+        if assigned(obj.FListItems) and (obj.FListItems.Count = 1) then
         begin
-          if assigned(obj.FListItems) then
-            if obj.FListItems.Count = 1 then
-            begin
-              // When first seeing a list we dont know if it contains anything.
-              // When at the end of list we check if the value has been set.
-              // If it hasn't, we'll remove the unused object
-              if (VarIsType(obj.FListItems[0].FValue, varNull)) and
-                 (not assigned(obj.FListItems[0].FItems)) and
-                 (not assigned(obj.FListItems[0].FListItems)) then
-              begin
-                obj.FListItems[0].Free;
-                obj.FListItems.Delete(0);
-              end;
-            end;
+          // When first seeing a list we dont know if it contains anything.
+          // When at the end of list we check if the value has been set.
+          // If it hasn't, we'll remove the unused object
+          if (VarIsEmpty(obj.FListItems[0].FValue)) and
+             (not assigned(obj.FListItems[0].FItems)) and
+             (not assigned(obj.FListItems[0].FListItems)) then
+          begin
+            obj.FListItems[0].Free;
+            obj.FListItems.Delete(0);
+          end;
         end;
         tag := 0;
       end;

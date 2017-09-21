@@ -29,6 +29,7 @@ type
     procedure TestEmptyList;
     procedure TestMovie;
     procedure TestUnEscape;
+    procedure TestEmptyDict;
   end;
 
 var
@@ -54,6 +55,21 @@ begin
     end;
   finally
     CloseFile(jsonFile);
+  end;
+end;
+
+procedure TestTJSON.TestEmptyDict;
+var
+  j: TJSON;
+begin
+  with TJSON.Parse(loadFile('test7.json')) do
+  begin
+    try
+      check(_['QueryResponse']['Item'][0]['Name'].AsString = 'Advance');
+      check(_['QueryResponse']['Item'][0]['ItemGroupDetail'].Items.Count = 0);
+    finally
+      Free;
+    end;
   end;
 end;
 
@@ -192,7 +208,12 @@ begin
       check(_['escape_text'].AsString = 'Some "test" \\ \u00e6=æ', format('%s is not Some "test" \\ \u00e6=æ', [_['escape_text'].AsString]));
       check(_['escape_path'].AsString = 'C:\test\test.txt', format('%s is not C:\test\test.txt', [_['escape_path'].AsString]));
 
-      check(_['nullvalue'].AsString = '');
+      check(_['nullvalue'].AsString = '', 'nullvalue is not empty');
+      check(_['nullvalue'].Value = null, 'nullvalue value is not null');
+
+      check(_['null_list'].ListItems.Count = 1, format('null_list count is not 1: %d', [_['null_list'].ListItems.Count]));
+      check(_['emptyList'].ListItems.Count = 0, format('emptyList is not empty: %d', [_['null_list'].ListItems.Count]));
+
     finally
       Free;
     end;
