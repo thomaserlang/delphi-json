@@ -1,4 +1,4 @@
-unit Testjson;
+unit Testdjson;
 {
 
   Delphi DUnit Test Case

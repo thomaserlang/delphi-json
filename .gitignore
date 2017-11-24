@@ -8,3 +8,4 @@ __history
 *.exe
 *.dll
 bin/*
+PjtTestJSON.stat

@@ -90,8 +90,8 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Testjson.pas"/>
-        <DCCReference Include="json.pas"/>
+        <DCCReference Include="Testdjson.pas"/>
+        <DCCReference Include="djson.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

@@ -16,8 +16,8 @@ program PjtTestJSON;
 
 uses
   DUnitTestRunner,
-  Testjson in 'Testjson.pas',
-  json in 'json.pas';
+  Testdjson in 'Testdjson.pas',
+  djson in 'djson.pas';
 
 {$R *.RES}
 
