@@ -6,7 +6,7 @@ They seemed too complicated for the simple task i had for JSON.
 
 So this is my go at it.
 
-This version is only tested on Delphi XE 3 and Delphi XE 6 (Android) but should work in all Delphi versions that support generics and TStringHelper.
+This version is only tested on Delphi XE 3, Delphi XE 6 (Android) and Delphi 10 but should work for all Delphi versions that support generics and TStringHelper.
 
 ### New in version 0.2
 
@@ -23,7 +23,7 @@ This version is only tested on Delphi XE 3 and Delphi XE 6 (Android) but should 
 
 ## Examples
 
-Just include the json.pas file in your uses list for this to work.
+Just include the djson.pas file in your uses list for this to work.
 
 ### Example 1 - User
 
