@@ -212,7 +212,7 @@ var
         if (prev = '\') and (prevPrev <> '\') then
         begin
           case s.chars[i] of
-            '\', '"': resultS := resultS + s.chars[i];
+            '\', '/', '"': resultS := resultS + s.chars[i];
             'u':
             begin
               if not TryStrToInt('$' + s.Substring(i+1, 4), ubuf) then
