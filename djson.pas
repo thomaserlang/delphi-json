@@ -26,53 +26,53 @@ unit djson;
 
 interface
 
-uses System.SysUtils, System.Classes, System.Variants, generics.collections, dialogs;
+uses System.SysUtils, System.Classes, System.Variants, generics.collections;
 
 type
-  TJSON = class;
+  TdJSON = class;
 
-  TJSONItems = class(TDictionary<string,TJSON>)
+  TdJSONItems = class(TDictionary<string,TdJSON>)
     public
       destructor Destroy; override;
   end;
 
-  TJSONListItems = class(TList<TJSON>)
+  TdJSONListItems = class(TList<TdJSON>)
     public
       destructor Destroy; override;
   end;
 
-  TJSON = class(TObject)
+  TdJSON = class(TObject)
     private
-      FParent: TJSON;
+      FParent: TdJSON;
       FIsList: boolean;
       FValue: Variant;
-      FItems: TJSONItems;
-      FListItems: TJSONListItems;
+      FItems: TdJSONItems;
+      FListItems: TdJSONListItems;
       FLastField: string;
-      function GetJSONByNameOrIndex(const AData: variant): TJSON;
+      function GetJSONByNameOrIndex(const AData: variant): TdJSON;
       function GetString: string;
       function GetInteger: integer;
       function GetBoolean: boolean;
       function GetInt64: int64;
       function GetDateTime: TDateTime;
     public
-      constructor Create(AParent: TJSON = nil);
+      constructor Create(AParent: TdJSON = nil);
       destructor Destroy; override;
-      function GetEnumerator: TList<TJSON>.TEnumerator;
-      class function Parse(const AJSON: string): TJSON;
+      function GetEnumerator: TList<TdJSON>.TEnumerator;
+      class function Parse(const AJSON: string): TdJSON;
 
-      property Parent: TJSON read FParent;
+      property Parent: TdJSON read FParent;
       property IsList: boolean read FIsList;
-      property Items: TJSONItems read FItems;
-      property ListItems: TJSONListItems read FListItems;
+      property Items: TdJSONItems read FItems;
+      property ListItems: TdJSONListItems read FListItems;
       property Value: Variant read FValue;
       property AsString: string read GetString;
       property AsInteger: integer read GetInteger;
       property AsBoolean: boolean read GetBoolean;
       property AsInt64: int64 read GetInt64;
       property AsDateTime: TDateTime read GetDateTime;
-      property JSONByNameOrIndex[const AData: variant]: TJSON read GetJSONByNameOrIndex; default;
-      property _[const AData: variant]: TJSON read GetJSONByNameOrIndex;
+      property JSONByNameOrIndex[const AData: variant]: TdJSON read GetJSONByNameOrIndex; default;
+      property _[const AData: variant]: TdJSON read GetJSONByNameOrIndex;
   end;
 
   EJSONUnknownFieldOrIndex = class(Exception);
@@ -91,13 +91,13 @@ uses
 
 { TJSON }
 
-constructor TJSON.Create(AParent: TJSON);
+constructor TdJSON.Create(AParent: TdJSON);
 begin
   FParent := AParent;
   FIsList := false;
 end;
 
-destructor TJSON.Destroy;
+destructor TdJSON.Destroy;
 begin
   if assigned(FListItems) then
     FListItems.free;
@@ -106,12 +106,12 @@ begin
   inherited;
 end;
 
-function TJSON.GetBoolean: boolean;
+function TdJSON.GetBoolean: boolean;
 begin
   result := VarAsType(FValue, varBoolean);
 end;
 
-function TJSON.GetDateTime: TDateTime;
+function TdJSON.GetDateTime: TDateTime;
 // TODO: Make a better date/time parser
 var
   d: string;
@@ -131,22 +131,22 @@ begin
     end;
 end;
 
-function TJSON.GetEnumerator: TList<TJSON>.TEnumerator;
+function TdJSON.GetEnumerator: TList<TdJSON>.TEnumerator;
 begin
   result := FListItems.GetEnumerator;
 end;
 
-function TJSON.GetInt64: int64;
+function TdJSON.GetInt64: int64;
 begin
   result := VarAsType(FValue, varInt64);
 end;
 
-function TJSON.GetInteger: integer;
+function TdJSON.GetInteger: integer;
 begin
   result := VarAsType(FValue, varInteger);
 end;
 
-function TJSON.GetJSONByNameOrIndex(const AData: variant): TJSON;
+function TdJSON.GetJSONByNameOrIndex(const AData: variant): TdJSON;
 var
   typestring: string;
 begin
@@ -170,7 +170,7 @@ begin
   raise EJSONUnknownFieldOrIndex.Create(format('Unknown field variant type: %s.', [VarTypeAsText(AData)]));
 end;
 
-function TJSON.GetString: string;
+function TdJSON.GetString: string;
 begin
   if VarIsType(FValue, varNull) then
     result := ''
@@ -178,13 +178,13 @@ begin
     result := VarToStr(FValue);
 end;
 
-class function TJSON.Parse(const AJSON: string): TJSON;
+class function TdJSON.Parse(const AJSON: string): TdJSON;
 var
   a, prevA: char;
   index, tag: integer;
   field, inString, escaped: boolean;
   temp: variant;
-  obj, tempObj: TJSON;
+  obj, tempObj: TdJSON;
 
   function getValue: variant;
   var
@@ -269,20 +269,20 @@ begin
       '{':
       begin
         if obj = nil then
-          obj := TJSON.Create(nil);
+          obj := TdJSON.Create(nil);
         obj.FIsList := false;
-        obj.FItems := TJSONItems.Create;
+        obj.FItems := TdJSONItems.Create;
         obj.FValue := Unassigned;
         tag := 0;
       end;
       '[':
       begin
         if obj = nil then
-          obj := TJSON.Create(nil);
+          obj := TdJSON.Create(nil);
         obj.FIsList := true;
-        obj.FListItems := TJSONListItems.Create;
+        obj.FListItems := TdJSONListItems.Create;
         obj.FValue := Unassigned;
-        tempObj := TJSON.Create(obj);
+        tempObj := TdJSON.Create(obj);
         obj.FListItems.add(tempObj);
         obj := tempObj;
         obj.FValue := Unassigned;
@@ -290,7 +290,7 @@ begin
       end;
       ':':
       begin
-        tempObj := TJSON.Create(obj);
+        tempObj := TdJSON.Create(obj);
         obj.FItems.add(getValue, tempObj);
         obj := tempObj;
         obj.FValue := null;
@@ -305,7 +305,7 @@ begin
           obj := obj.Parent;
         if obj.FIsList then
         begin
-          tempObj := TJSON.Create(obj);
+          tempObj := TdJSON.Create(obj);
           obj.FListItems.add(tempObj);
           obj := tempObj;
           obj.FValue := Unassigned;
@@ -350,9 +350,9 @@ end;
 
 { TJSONItems }
 
-destructor TJSONItems.Destroy;
+destructor TdJSONItems.Destroy;
 var
-  item: TJSON;
+  item: TdJSON;
 begin
   for item in self.Values do
     item.Free;
@@ -361,9 +361,9 @@ end;
 
 { TJSONListItem }
 
-destructor TJSONListItems.Destroy;
+destructor TdJSONListItems.Destroy;
 var
-  item: TJSON;
+  item: TdJSON;
 begin
   for item in self do
     item.Free;
