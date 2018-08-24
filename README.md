@@ -59,11 +59,11 @@ Just include the djson.pas file in your uses list for this to work.
 #### Delphi 
 ```delphi
 var
-  user: TJSON;
-  photo: TJSON;
-  i: TJSON;
+  user: TdJSON;
+  photo: TdJSON;
+  i: TdJSON;
 begin
-  user := TJSON.parse({JSON_TEXT});
+  user := TdJSON.parse({JSON_TEXT});
   try
     writeln('Username: '+ user['username'].AsString);
     writeln('Name: '+ user['name'].AsString);
@@ -108,10 +108,10 @@ end;
 #### Delphi
 ```delphi
 var
-  users: TJSON;
-  user: TJSON;
+  users: TdJSON;
+  user: TdJSON;
 begin
-  users := TJSON.Parse({JSON_TEXT});
+  users := TdJSON.Parse({JSON_TEXT});
   try
     for user in users do
     begin
