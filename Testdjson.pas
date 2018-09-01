@@ -12,12 +12,12 @@ unit Testdjson;
 interface
 
 uses
-  TestFramework, Variants, SysUtils, Classes, Dialogs, json, windows, dateutils;
+  TestFramework, Variants, SysUtils, Classes, Dialogs, djson, windows, dateutils;
 
 type
   // Test methods for class TJSON
 
-  TestTJSON = class(TTestCase)
+  TestTdJSON = class(TTestCase)
   strict private
     function loadFile(const AFilename: string): string;
   public
@@ -37,7 +37,7 @@ var
 
 implementation
 
-function TestTJSON.loadFile(const AFilename: string): string;
+function TestTdJSON.loadFile(const AFilename: string): string;
 var
   jsonFile: TextFile;
   text: string;
@@ -58,11 +58,11 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestEmptyDict;
+procedure TestTdJSON.TestEmptyDict;
 var
-  j: TJSON;
+  j: TdJSON;
 begin
-  with TJSON.Parse(loadFile('test7.json')) do
+  with TdJSON.Parse(loadFile('test7.json')) do
   begin
     try
       check(_['QueryResponse']['Item'][0]['Name'].AsString = 'Advance');
@@ -73,11 +73,11 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestEmptyList;
+procedure TestTdJSON.TestEmptyList;
 var
-  j: TJSON;
+  j: TdJSON;
 begin
-  with TJSON.Parse(loadFile('test4.json')) do
+  with TdJSON.Parse(loadFile('test4.json')) do
   begin
     try
       check(IsList = false);
@@ -87,7 +87,7 @@ begin
       Free;
     end;
   end;
-  with TJSON.Parse(loadFile('test5.json')) do
+  with TdJSON.Parse(loadFile('test5.json')) do
   begin
     try
       check(IsList = true);
@@ -99,9 +99,9 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestListInListInList;
+procedure TestTdJSON.TestListInListInList;
 begin
-  with TJSON.Parse(loadFile('test3.json')) do
+  with TdJSON.Parse(loadFile('test3.json')) do
   begin
     try
       check(_[0].IsList = true);
@@ -112,9 +112,9 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestMovie;
+procedure TestTdJSON.TestMovie;
 begin
-  with TJSON.Parse(loadFile('test6.json')) do
+  with TdJSON.Parse(loadFile('test6.json')) do
   try
     check(_['page'].AsInteger = 1);
     check(_['results'][0]['id'].AsInteger = 262543);
@@ -126,46 +126,46 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestUnEscape;
+procedure TestTdJSON.TestUnEscape;
 begin
-  with TJSON.Parse('{"name": "Kurt \u00e6 bc"}') do
+  with TdJSON.Parse('{"name": "Kurt \u00e6 bc"}') do
   try
     check(_['name'].AsString = 'Kurt æ bc');
   finally
     free;
   end;
-  with TJSON.Parse('{"name": "a \b b"}') do
+  with TdJSON.Parse('{"name": "a \b b"}') do
   try
     check(_['name'].AsString = 'a '+#8+' b');
   finally
     free;
   end;
-  with TJSON.Parse('{"name": "a \n b"}') do
+  with TdJSON.Parse('{"name": "a \n b"}') do
   try
     check(_['name'].AsString = 'a '+#10+' b');
   finally
     free;
   end;
-  with TJSON.Parse('{"name": "a \r b"}') do
+  with TdJSON.Parse('{"name": "a \r b"}') do
   try
     check(_['name'].AsString = 'a '+#13+' b');
   finally
     free;
   end;
-  with TJSON.Parse('{"name": "a \t b"}') do
+  with TdJSON.Parse('{"name": "a \t b"}') do
   try
     check(_['name'].AsString = 'a '+#9+' b');
   finally
     free;
   end;
-  with TJSON.Parse('{"name": "a \f b"}') do
+  with TdJSON.Parse('{"name": "a \f b"}') do
   try
     check(_['name'].AsString = 'a '+#12+' b');
   finally
     free;
   end;
 
-  with TJSON.Parse('{"name": "\\"}') do
+  with TdJSON.Parse('{"name": "\\"}') do
   try
     check(_['name'].AsString = '\');
   finally
@@ -173,14 +173,14 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestUser;
+procedure TestTdJSON.TestUser;
 var
-  photo, item, item_a: TJSON;
+  photo, item, item_a: TdJSON;
   i: integer;
   fmtSettings: TFormatSettings;
 begin
   GetLocaleFormatSettings(GetSystemDefaultLCID, fmtSettings);
-  with TJSON.Parse(loadFile('test1.json')) do
+  with TdJSON.Parse(loadFile('test1.json')) do
   begin
     try
       Check(_['username'].AsString = 'thomas', _['username'].AsString);
@@ -221,15 +221,15 @@ begin
   end;
 end;
 
-procedure TestTJSON.TestUserList();
+procedure TestTdJSON.TestUserList();
 var
-  users: TJSON;
-  user: TJSON;
+  users: TdJSON;
+  user: TdJSON;
   i: integer;
 
-  u: TJSON;
+  u: TdJSON;
 begin
-  users := TJSON.Parse(loadFile('test2.json'));
+  users := TdJSON.Parse(loadFile('test2.json'));
   try
     check(users.ListItems.Count = 3, format('%d is not 3', [users.ListItems.Count]));
     for i in [0,1,2] do
@@ -248,6 +248,6 @@ end;
 
 initialization
   // Register any test cases with the test runner
-  RegisterTest(TestTJSON.Suite);
+  RegisterTest(TestTdJSON.Suite);
 end.
 
