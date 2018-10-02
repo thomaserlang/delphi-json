@@ -8,15 +8,7 @@ So this is my go at it.
 
 This version is only tested on Delphi XE 3, Delphi XE 6 (Android) and Delphi 10 but should work for all Delphi versions that support generics and TStringHelper.
 
-### New in version 0.2
-
-  - Rewrote the whole thing to use TDictionary.
-  - Added support for decoding unicode encoded characters.
-  - Added support for datetime (must be specified in ISO 8601 for it to work!).
-
 ### What is missing
-
-  - A better way to handle null values.
   - Exception if the JSON text is not valid.
   - Convert to string
   - Serialization and deserialization from/to objects.
@@ -127,7 +119,7 @@ end;
 # LICENSE
 The MIT License (MIT)
 
-Copyright (c) 2014 Thomas Erlang
+Copyright (c) 2018 Thomas Erlang
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
