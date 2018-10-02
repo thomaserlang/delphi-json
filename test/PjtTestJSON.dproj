@@ -93,7 +93,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="Testdjson.pas"/>
-        <DCCReference Include="djson.pas"/>
+        <DCCReference Include="..\djson.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
