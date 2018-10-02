@@ -9,3 +9,5 @@ __history
 *.dll
 bin/*
 PjtTestJSON.stat
+Win32/Debug/bugreport.txt
+PjtTestJSON.mes

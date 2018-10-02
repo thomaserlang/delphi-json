@@ -34,4 +34,10 @@
   "null_list": [null],
   "emptyList": [],
   "emptyStringList": [""],
+  "list_in_list": [
+    [1,2],
+    [3,4]
+  ],
+  "bool_true": true,
+  "bool_false": false
 }

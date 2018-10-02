@@ -45,10 +45,11 @@ type
     private
       FParent: TdJSON;
       FIsList: boolean;
+      FIsKeyValue: boolean;
+      FIsDict: boolean;
       FValue: Variant;
       FItems: TdJSONItems;
       FListItems: TdJSONListItems;
-      FLastField: string;
       function GetJSONByNameOrIndex(const AData: variant): TdJSON;
       function GetString: string;
       function GetInteger: integer;
@@ -63,6 +64,7 @@ type
 
       property Parent: TdJSON read FParent;
       property IsList: boolean read FIsList;
+      property IsDict: boolean read FIsDict;
       property Items: TdJSONItems read FItems;
       property ListItems: TdJSONListItems read FListItems;
       property Value: Variant read FValue;
@@ -77,6 +79,9 @@ type
 
   EJSONUnknownFieldOrIndex = class(Exception);
   EJSONParseError = class(Exception);
+  {$IFDEF MSWINDOWS}
+  procedure DebugStr(const msg: variant);
+  {$ENDIF}
 
 var
   DJSONFormatSettings: TFormatSettings;
@@ -84,17 +89,26 @@ var
 implementation
 
 uses
-  XSBuiltIns;
+  XSBuiltIns
+  {$IFDEF MSWINDOWS}, Windows{$ENDIF}
+  ;
 
 {$M+}
 {$TYPEINFO ON}
+
+{$IFDEF MSWINDOWS}
+procedure DebugStr(const msg: variant);
+begin
+  OutputDebugString(PWideChar(format('%s: %s', [FormatDateTime('hh:nn:ss.zzz', now), msg])));
+end;
+{$ENDIF}
 
 { TJSON }
 
 constructor TdJSON.Create(AParent: TdJSON);
 begin
   FParent := AParent;
-  FIsList := false;
+  FValue := Unassigned;
 end;
 
 destructor TdJSON.Destroy;
@@ -147,8 +161,6 @@ begin
 end;
 
 function TdJSON.GetJSONByNameOrIndex(const AData: variant): TdJSON;
-var
-  typestring: string;
 begin
   case VarType(AData) and VarTypeMask of
     varString, varUString, varWord, varLongWord:
@@ -182,9 +194,9 @@ class function TdJSON.Parse(const AJSON: string): TdJSON;
 var
   a, prevA: char;
   index, tag: integer;
-  field, inString, escaped: boolean;
+  inString, escaped: boolean;
   temp: variant;
-  obj, tempObj: TdJSON;
+  obj: TdJSON;
 
   function getValue: variant;
   var
@@ -195,11 +207,25 @@ var
   begin
     s := trim(AJSON.Substring(tag-1, index-tag));
     result := unassigned;
-    if s.ToLower = 'null' then
-      exit(null);
+    if s = '' then
+      exit;
+
+    if s.Chars[0] <> '"' then
+    begin
+      if s = 'null' then
+        exit(null)
+      else if s = 'false' then
+        exit(false)
+      else if s = 'true' then
+        exit(true);
+      exit(s);
+    end;
+
     if s = '""' then
       exit('');
     resultS := '';
+    prev := #0;
+    prevPrev := #0;
     skip := 0;
     for i := 0 to s.Length - 1 do
     begin
@@ -246,10 +272,27 @@ var
       result := resultS;
   end;
 
+  procedure SetValue;
+  begin
+    obj.FValue := getValue;
+  end;
+
+  procedure AddSingleValue;
+  begin
+    temp := getValue();
+    if not VarIsEmpty(temp) then
+    begin
+      obj := TdJSON.Create(obj);
+      obj.FValue := temp;
+      obj.parent.ListItems.Add(obj);
+      obj := obj.Parent;
+    end;
+  end;
+
 begin
+  result := nil;
   index := 0;
   tag := 0;
-  field := false;
   prevA := ' ';
   inString := false;
   escaped := false;
@@ -268,84 +311,84 @@ begin
     case a of
       '{':
       begin
-        if obj = nil then
-          obj := TdJSON.Create(nil);
-        obj.FIsList := false;
+        if not assigned(obj) or not obj.FIsKeyValue then
+          obj := TdJSON.Create(obj);
+        obj.FIsKeyValue := false;
+        obj.FIsDict := true;
         obj.FItems := TdJSONItems.Create;
-        obj.FValue := Unassigned;
-        tag := 0;
-      end;
-      '[':
-      begin
-        if obj = nil then
-          obj := TdJSON.Create(nil);
-        obj.FIsList := true;
-        obj.FListItems := TdJSONListItems.Create;
-        obj.FValue := Unassigned;
-        tempObj := TdJSON.Create(obj);
-        obj.FListItems.add(tempObj);
-        obj := tempObj;
-        obj.FValue := Unassigned;
-        tag := 0;
-      end;
-      ':':
-      begin
-        tempObj := TdJSON.Create(obj);
-        obj.FItems.add(getValue, tempObj);
-        obj := tempObj;
-        obj.FValue := null;
-        tag := 0;
-      end;
-      ',':
-      begin
-        temp := getValue();
-        if not VarIsEmpty(temp) then
-          obj.FValue := temp;
-        if (obj.Parent <> nil) then
-          obj := obj.Parent;
-        if obj.FIsList then
+        if not assigned(result) then
         begin
-          tempObj := TdJSON.Create(obj);
-          obj.FListItems.add(tempObj);
-          obj := tempObj;
-          obj.FValue := Unassigned;
+          result := obj;
+        end;
+        if assigned(obj.parent) and obj.parent.IsList then
+        begin
+          obj.Parent.ListItems.Add(obj);
         end;
         tag := 0;
       end;
       '}':
       begin
-        temp := getValue();
-        if not VarIsEmpty(temp) then
-          obj.FValue := temp;
-        if (obj.Parent <> nil) and not (assigned(obj.FItems) and (obj.FItems.Count = 0)) then
+        if not obj.IsDict then
+        begin
+          SetValue();
           obj := obj.Parent;
+        end;
+        obj := obj.Parent;
+        tag := 0;
+      end;
+      '[':
+      begin
+        if not assigned(obj) or not obj.FIsKeyValue then
+          obj := TdJSON.Create(obj);
+        obj.FIsKeyValue := false;
+        obj.FIsList := true;
+        obj.FListItems := TdJSONListItems.Create;
+        if not assigned(result) then
+        begin
+          result := obj;
+        end;
+        if assigned(obj.parent) and obj.parent.IsList then
+        begin
+          obj.Parent.ListItems.Add(obj);
+        end;
         tag := 0;
       end;
       ']':
       begin
-        temp := getValue();
-        if not VarIsEmpty(temp) then
-          obj.FValue := temp;
-        if (obj.Parent <> nil) then
-          obj := obj.Parent;
-        if assigned(obj.FListItems) and (obj.FListItems.Count = 1) then
+        if not obj.IsList and not obj.IsDict then
         begin
-          // When first seeing a list we dont know if it contains anything.
-          // When at the end of list we check if the value has been set.
-          // If it hasn't, we'll remove the unused object
-          if (VarIsEmpty(obj.FListItems[0].FValue)) and
-             (not assigned(obj.FListItems[0].FItems)) and
-             (not assigned(obj.FListItems[0].FListItems)) then
-          begin
-            obj.FListItems[0].Free;
-            obj.FListItems.Delete(0);
-          end;
+          SetValue();
+          obj.Parent.ListItems.Add(obj);
+        end
+        else if obj.IsList then
+        begin
+          AddSingleValue();
+        end;
+        obj := obj.Parent;
+        tag := 0;
+      end;
+      ':':
+      begin
+        obj := TdJSON.Create(obj);
+        obj.FIsKeyValue := true;
+        obj.Parent.Items.Add(getValue(), obj);
+        tag := 0;
+      end;
+      ',':
+      begin
+        if not obj.IsList and not obj.IsDict then
+        begin
+          SetValue();
+          obj := obj.Parent;
+        end
+        else if obj.IsList then
+        begin
+          AddSingleValue();
         end;
         tag := 0;
       end;
     end;
   end;
-  result := obj;
 end;
 
 { TJSONItems }

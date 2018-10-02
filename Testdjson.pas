@@ -12,7 +12,8 @@ unit Testdjson;
 interface
 
 uses
-  TestFramework, Variants, SysUtils, Classes, Dialogs, djson, windows, dateutils;
+  TestFramework, Variants, SysUtils, Classes, Dialogs, djson, windows, dateutils,
+  generics.collections;
 
 type
   // Test methods for class TJSON
@@ -20,8 +21,7 @@ type
   TestTdJSON = class(TTestCase)
   strict private
     function loadFile(const AFilename: string): string;
-  public
-
+  public                                               
   published
     procedure TestUser;
     procedure TestUserList;
@@ -36,6 +36,9 @@ var
   fmt: TFormatSettings;
 
 implementation
+
+uses
+  madexcept;
 
 function TestTdJSON.loadFile(const AFilename: string): string;
 var
@@ -59,30 +62,41 @@ begin
 end;
 
 procedure TestTdJSON.TestEmptyDict;
-var
-  j: TdJSON;
 begin
+  try
   with TdJSON.Parse(loadFile('test7.json')) do
   begin
     try
-      check(_['QueryResponse']['Item'][0]['Name'].AsString = 'Advance');
-      check(_['QueryResponse']['Item'][0]['ItemGroupDetail'].Items.Count = 0);
+      check(_['QueryResponse']['Item'][0]['Name'].AsString = 'Advance', 'Name is not Advance');
+      check(_['QueryResponse']['Item'][0]['ItemGroupDetail'].Items.Count = 0, 'items.count is not 0');
     finally
       Free;
     end;
   end;
+  with TdJSON.Parse(loadFile('test8.json')) do
+  begin
+    try
+      check(_['results'].Items.Count = 0);
+    finally
+      Free;
+    end;
+  end;
+  except
+    handleException;
+    raise;
+  end;
 end;
 
 procedure TestTdJSON.TestEmptyList;
-var
-  j: TdJSON;
 begin
+  try
   with TdJSON.Parse(loadFile('test4.json')) do
   begin
     try
-      check(IsList = false);
-      check(assigned(_['empty'].ListItems) = true);
-      check(_['empty'].ListItems.count = 0);
+      check(IsList = false, 'isList is not false');
+      check(_['empty'].IsList = true, 'isList is not true');
+      check(assigned(_['empty'].ListItems) = true, 'ListItems is not assigned');
+      check(_['empty'].ListItems.count = 0, 'listitems.count is not 0');
     finally
       Free;
     end;
@@ -90,12 +104,16 @@ begin
   with TdJSON.Parse(loadFile('test5.json')) do
   begin
     try
-      check(IsList = true);
-      check(assigned(ListItems) = true);
-      check(ListItems.count = 0, inttostr(ListItems.count));
+      check(IsList = true, 'isList is not true');
+      check(assigned(ListItems) = true, 'listItems is not assigned');
+      check(ListItems.count = 0, 'listitems.count is not 0');
     finally
       Free;
     end;
+  end;
+  except
+    handleException;
+    raise;
   end;
 end;
 
@@ -114,6 +132,7 @@ end;
 
 procedure TestTdJSON.TestMovie;
 begin
+  try
   with TdJSON.Parse(loadFile('test6.json')) do
   try
     check(_['page'].AsInteger = 1);
@@ -123,6 +142,10 @@ begin
     check(_['results'][0]['popularity'].AsString = '6.6273989934368');
   finally
     free;
+  end;
+  except
+    handleException;
+    raise;
   end;
 end;
 
@@ -175,15 +198,14 @@ end;
 
 procedure TestTdJSON.TestUser;
 var
-  photo, item, item_a: TdJSON;
+  photo, item: TdJSON;
   i: integer;
-  fmtSettings: TFormatSettings;
 begin
-  GetLocaleFormatSettings(GetSystemDefaultLCID, fmtSettings);
+  try
   with TdJSON.Parse(loadFile('test1.json')) do
   begin
     try
-      Check(_['username'].AsString = 'thomas', _['username'].AsString);
+      Check(_['username'].AsString = 'thomas', _['username'].AsString + ' is not thomas');
       for i in [1,2] do
       begin
         photo := _['photos'][i-1];
@@ -196,13 +218,13 @@ begin
       for i in [1,2,3] do
       begin
         item := _['int_list'][i-1];
-        check(item.AsInteger = i);
+        check(item.AsInteger = i, format('item value is not %d', [i]));
       end;
 
       for i in [1,2,3] do
       begin
         item := _['str_list'][i-1];
-        check(item.AsString = inttostr(i));
+        check(item.AsString = inttostr(i), format('item value is not %d', [i]));
       end;
 
       check(_['escape_text'].AsString = 'Some "test" \\ \u00e6=æ', format('%s is not Some "test" \\ \u00e6=æ', [_['escape_text'].AsString]));
@@ -215,9 +237,21 @@ begin
       check(_['emptyList'].ListItems.Count = 0, format('emptyList is not empty: %d', [_['null_list'].ListItems.Count]));
       check(_['emptyStringList'].ListItems.Count = 1, format('emptyStringList count is not 1: %d', [_['emptyStringList'].ListItems.Count]));
 
+      check(_['list_in_list'][0][0].AsInteger = 1, '_[''list_in_list''][0][0] is not 1');
+      check(_['list_in_list'][0][1].AsInteger = 2, '_[''list_in_list''][0][1] is not 2');
+      check(_['list_in_list'][1][0].AsInteger = 3, '_[''list_in_list''][1][0] is not 3');
+      check(_['list_in_list'][1][1].AsInteger = 4, '_[''list_in_list''][1][1] is not 4');
+
+      check(_['bool_true'].AsBoolean, 'bool_true is not true');
+      check(not _['bool_false'].AsBoolean, 'bool_false is not false');
+
     finally
       Free;
     end;
+  end;
+  except
+    handleException;
+    raise;
   end;
 end;
 
@@ -226,9 +260,8 @@ var
   users: TdJSON;
   user: TdJSON;
   i: integer;
-
-  u: TdJSON;
 begin
+  try
   users := TdJSON.Parse(loadFile('test2.json'));
   try
     check(users.ListItems.Count = 3, format('%d is not 3', [users.ListItems.Count]));
@@ -243,6 +276,10 @@ begin
     end;
   finally
     users.free;
+  end;
+  except
+    handleException;
+    raise;
   end;
 end;
 
