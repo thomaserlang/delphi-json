@@ -56,6 +56,7 @@ type
       function GetBoolean: boolean;
       function GetInt64: int64;
       function GetDateTime: TDateTime;
+      function GetIsNull: boolean;
     public
       constructor Create(AParent: TdJSON = nil);
       destructor Destroy; override;
@@ -65,6 +66,7 @@ type
       property Parent: TdJSON read FParent;
       property IsList: boolean read FIsList;
       property IsDict: boolean read FIsDict;
+      property IsNull: boolean read GetIsNull;
       property Items: TdJSONItems read FItems;
       property ListItems: TdJSONListItems read FListItems;
       property Value: Variant read FValue;
@@ -158,6 +160,11 @@ end;
 function TdJSON.GetInteger: integer;
 begin
   result := VarAsType(FValue, varInteger);
+end;
+
+function TdJSON.GetIsNull: boolean;
+begin
+  result := Value = null;
 end;
 
 function TdJSON.GetJSONByNameOrIndex(const AData: variant): TdJSON;

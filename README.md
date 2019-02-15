@@ -100,7 +100,7 @@ end;
   },
   {
     "username": "bent",
-    "name": "Bent"
+    "name": null
   }
 ]
 ```
@@ -116,7 +116,8 @@ begin
     for user in users do
     begin
       writeln(user['username'].AsString);
-      writeln(user['name'].AsString);
+      if (not user['name'].IsNull) then
+        writeln(user['name'].AsString);
     end;
   finally
     users.Free;

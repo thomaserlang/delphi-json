@@ -231,7 +231,7 @@ begin
       check(_['escape_path'].AsString = 'C:\test\test.txt', format('%s is not C:\test\test.txt', [_['escape_path'].AsString]));
 
       check(_['nullvalue'].AsString = '', 'nullvalue is not empty');
-      check(_['nullvalue'].Value = null, 'nullvalue value is not null');
+      check(_['nullvalue'].IsNull, 'nullvalue value is not null');
 
       check(_['null_list'].ListItems.Count = 1, format('null_list count is not 1: %d', [_['null_list'].ListItems.Count]));
       check(_['emptyList'].ListItems.Count = 0, format('emptyList is not empty: %d', [_['null_list'].ListItems.Count]));
