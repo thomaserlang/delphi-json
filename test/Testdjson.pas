@@ -200,6 +200,7 @@ procedure TestTdJSON.TestUser;
 var
   photo, item: TdJSON;
   i: integer;
+  d: double;
 begin
   try
   with TdJSON.Parse(loadFile('test1.json')) do
@@ -244,6 +245,10 @@ begin
 
       check(_['bool_true'].AsBoolean, 'bool_true is not true');
       check(not _['bool_false'].AsBoolean, 'bool_false is not false');
+      DebugStr(_['double'].AsDouble);
+
+      d := 1.337;
+      check(_['double'].AsDouble = d, 'double is not 1.337');
 
     finally
       Free;

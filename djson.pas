@@ -55,6 +55,7 @@ type
       function GetInteger: integer;
       function GetBoolean: boolean;
       function GetInt64: int64;
+      function GetDouble: double;
       function GetDateTime: TDateTime;
       function GetIsNull: boolean;
     public
@@ -74,6 +75,7 @@ type
       property AsInteger: integer read GetInteger;
       property AsBoolean: boolean read GetBoolean;
       property AsInt64: int64 read GetInt64;
+      property AsDouble: double read GetDouble;
       property AsDateTime: TDateTime read GetDateTime;
       property JSONByNameOrIndex[const AData: variant]: TdJSON read GetJSONByNameOrIndex; default;
       property _[const AData: variant]: TdJSON read GetJSONByNameOrIndex;
@@ -145,6 +147,11 @@ begin
     finally
       Free();
     end;
+end;
+
+function TdJSON.GetDouble: double;
+begin
+  result := VarAsType(FValue, varDouble);
 end;
 
 function TdJSON.GetEnumerator: TList<TdJSON>.TEnumerator;

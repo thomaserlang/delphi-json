@@ -39,5 +39,6 @@
     [3,4]
   ],
   "bool_true": true,
-  "bool_false": false
+  "bool_false": false,
+  "double": "1.337"
 }
