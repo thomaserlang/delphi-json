@@ -175,13 +175,27 @@ begin
 end;
 
 function TdJSON.GetJSONByNameOrIndex(const AData: variant): TdJSON;
+var
+  p: Integer;
 begin
   case VarType(AData) and VarTypeMask of
     varString, varUString, varWord, varLongWord:
-      if not FItems.TryGetValue(AData, result) then
-        raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
-      else
-        exit;
+      begin
+        p := Pos('|', AData);
+        if p = 0 then
+          if not FItems.TryGetValue(AData, result) then
+            raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
+          else
+            exit;
+
+        if not FItems.TryGetValue(Copy(AData, 1, p - 1), result) then
+            raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
+          else
+          begin
+            Result := result.GetJSONByNameOrIndex(Copy(AData, p + 1, Length(aData) - p));
+            exit;
+          end;
+      end;
     varInteger, varInt64, varSmallint, varShortInt, varByte:
     begin
       if (FListItems.Count - 1) >= AData then
