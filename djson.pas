@@ -234,13 +234,17 @@ var
   tab, lb: string;
   i: Integer;
 begin
-  tab := '';
-  lb := '';
   if FancyFormat then
   begin
     for i := 0 to Iteration - 1 do
       tab := tab + SpaceChar;
     lb := #13#10;
+  end
+  else
+  begin
+    tab := '';
+    lb := '';
+    SpaceChar := '';
   end;
 
   if FIsList then
