@@ -1,4 +1,4 @@
-﻿{
+{
 The MIT License (MIT)
 
 Copyright (c) 2018 Thomas Erlang
@@ -58,11 +58,15 @@ type
       function GetDouble: double;
       function GetDateTime: TDateTime;
       function GetIsNull: boolean;
+    protected
+      function jsonString(FancyFormat: Boolean; Iteration: Integer; SpaceChar: String): String;
     public
       constructor Create(AParent: TdJSON = nil);
       destructor Destroy; override;
       function GetEnumerator: TList<TdJSON>.TEnumerator;
       class function Parse(const AJSON: string): TdJSON;
+
+      function AsJSONString(FancyFormat: Boolean = true; SpaceChar: String = #09): String;
 
       property Parent: TdJSON read FParent;
       property IsList: boolean read FIsList;
@@ -94,7 +98,7 @@ implementation
 
 uses
   XSBuiltIns
-  {$IFDEF MSWINDOWS}, Windows{$ENDIF}
+  {$IFDEF MSWINDOWS}, Windows{$ENDIF}, DateUtils
   ;
 
 {$M+}
@@ -108,6 +112,11 @@ end;
 {$ENDIF}
 
 { TJSON }
+
+function TdJSON.AsJSONString(FancyFormat: Boolean; SpaceChar: String): String;
+begin
+  Result := jsonString(FancyFormat, 0, SpaceChar);
+end;
 
 constructor TdJSON.Create(AParent: TdJSON);
 begin
@@ -176,23 +185,23 @@ end;
 
 function TdJSON.GetJSONByNameOrIndex(const AData: variant): TdJSON;
 var
-  p: Integer;
+  i: integer;
 begin
   case VarType(AData) and VarTypeMask of
     varString, varUString, varWord, varLongWord:
       begin
-        p := Pos('|', AData);
-        if p = 0 then
+        i := Pos('|', AData);
+        if i = 0 then
           if not FItems.TryGetValue(AData, result) then
             raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
           else
             exit;
 
-        if not FItems.TryGetValue(Copy(AData, 1, p - 1), result) then
+        if not FItems.TryGetValue(Copy(AData, 1, i - 1), result) then
             raise EJSONUnknownFieldOrIndex.Create(format('Unknown field: %s', [AData]))
           else
           begin
-            Result := result.GetJSONByNameOrIndex(Copy(AData, p + 1, Length(aData) - p));
+            Result := result.GetJSONByNameOrIndex(Copy(AData, i + 1, Length(aData) - i));
             exit;
           end;
       end;
@@ -216,6 +225,67 @@ begin
     result := ''
   else
     result := VarToStr(FValue);
+end;
+
+function TdJSON.jsonString(FancyFormat: Boolean; Iteration: Integer; SpaceChar: String): String;
+var
+  sub: TPair<string, TdJSON>;
+  entry: TdJSON;
+  tab, lb: string;
+  i: Integer;
+begin
+  if FancyFormat then
+  begin
+    for i := 0 to Iteration - 1 do
+      tab := tab + SpaceChar;
+    lb := #13#10;
+  end
+  else
+  begin
+    tab := '';
+    lb := '';
+    SpaceChar := '';
+  end;
+
+  if FIsList then
+  begin
+    Result := '[' + lb;
+    for entry in FListItems do
+    begin
+      Result := Result + tab + SpaceChar + entry.jsonString(FancyFormat, Iteration + 1, SpaceChar);
+      Result := Result + ',' + lb;
+    end;
+    if Result[Length(Result) - length(lb)] = ',' then
+      Delete(Result, Length(Result) - Length(lb), 1);
+    Result := Result + tab + ']';
+  end
+  else if FIsDict then
+  begin
+    Result := '{' + lb;
+    for sub in Items do
+    begin
+      Result := Result + tab + SpaceChar + '"' + sub.Key + '"';
+      if FancyFormat then
+        Result := Result + ': '
+      else
+        Result := Result + ':';
+      Result := Result + sub.Value.jsonString(FancyFormat, Iteration + 1, SpaceChar);
+      Result := Result + ',' + lb;
+    end;
+    if Result[Length(Result) - Length(lb)] = ',' then
+      Delete(Result, Length(Result) - Length(lb), 1);
+    Result := Result + tab + '}';
+  end
+  else
+  begin
+    case VarType(FValue) of
+      varNull: Result := 'null';
+      varInteger, varDouble: Result := VarToStr(FValue);
+      varBoolean: Result := AnsiLowerCase(VarToStr(FValue));
+      varString, varUString: Result := '"' + VarToStr(FValue) + '"';
+      else Result := 'ERROR';
+    end;
+  end
 end;
 
 class function TdJSON.Parse(const AJSON: string): TdJSON;
@@ -455,3 +525,4 @@ initialization
   end;
 
 end.
+
