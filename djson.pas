@@ -98,7 +98,7 @@ implementation
 
 uses
   XSBuiltIns
-  {$IFDEF MSWINDOWS}, Windows{$ENDIF}, DateUtils
+  {$IFDEF MSWINDOWS}, Windows{$ENDIF}, DateUtils, WideStrUtils
   ;
 
 {$M+}
@@ -228,6 +228,22 @@ begin
 end;
 
 function TdJSON.jsonString(FancyFormat: Boolean; Iteration: Integer; SpaceChar: String): String;
+
+  function EscapeStr(AString: string): string;
+  var
+    i: Integer;
+  begin
+    Result := AString;
+    for i := Length(AString) downto 1 do
+    begin
+      case AString[i] of
+      '"', '\', '/', #08, #12, #10, #13, #09:
+        begin
+          Insert('\', Result, i);
+        end;
+      end;
+    end;
+  end;
 var
   sub: TPair<string, TdJSON>;
   entry: TdJSON;
@@ -282,7 +298,7 @@ begin
       varNull: Result := 'null';
       varInteger, varDouble: Result := VarToStr(FValue);
       varBoolean: Result := AnsiLowerCase(VarToStr(FValue));
-      varString, varUString: Result := '"' + VarToStr(FValue) + '"';
+      varString, varUString: Result := '"' + EscapeStr(VarToStr(FValue)) + '"';
       else Result := 'ERROR';
     end;
   end
@@ -302,6 +318,7 @@ var
     ubuf, i, skip: integer;
     s: string;
     resultS: string;
+    FS: TFormatSettings;
   begin
     s := trim(AJSON.Substring(tag-1, index-tag));
     result := unassigned;
@@ -310,13 +327,15 @@ var
 
     if s.Chars[0] <> '"' then
     begin
+      FS.ThousandSeparator := ',';
+      FS.DecimalSeparator := '.';
       if s = 'null' then
         exit(null)
       else if s = 'false' then
         exit(false)
       else if s = 'true' then
         exit(true);
-      exit(s);
+      exit(StrToFloat(s, FS));
     end;
 
     if s = '""' then
