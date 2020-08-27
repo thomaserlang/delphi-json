@@ -101,9 +101,6 @@ uses
   {$IFDEF MSWINDOWS}, Windows{$ENDIF}, DateUtils, WideStrUtils
   ;
 
-{$M+}
-{$TYPEINFO ON}
-
 {$IFDEF MSWINDOWS}
 procedure DebugStr(const msg: variant);
 begin
