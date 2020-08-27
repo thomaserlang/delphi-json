@@ -87,9 +87,6 @@ type
 
   EJSONUnknownFieldOrIndex = class(Exception);
   EJSONParseError = class(Exception);
-  {$IFDEF MSWINDOWS}
-  procedure DebugStr(const msg: variant);
-  {$ENDIF}
 
 var
   DJSONFormatSettings: TFormatSettings;
@@ -98,17 +95,9 @@ implementation
 
 uses
   XSBuiltIns
-  {$IFDEF MSWINDOWS}, Windows{$ENDIF}, DateUtils, WideStrUtils
-  ;
+  {$IFDEF MSWINDOWS}, Windows{$ENDIF};
 
-{$IFDEF MSWINDOWS}
-procedure DebugStr(const msg: variant);
-begin
-  OutputDebugString(PWideChar(format('%s: %s', [FormatDateTime('hh:nn:ss.zzz', now), msg])));
-end;
-{$ENDIF}
-
-{ TJSON }
+{ TdJSON }
 
 function TdJSON.AsJSONString(FancyFormat: Boolean; SpaceChar: String): String;
 begin
