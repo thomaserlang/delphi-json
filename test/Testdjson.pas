@@ -19,8 +19,6 @@ type
   // Test methods for class TJSON
 
   TestTdJSON = class(TTestCase)
-  strict private
-    function loadFile(const AFilename: string): string;
   public                                               
   published
     procedure TestUser;
@@ -40,31 +38,10 @@ implementation
 uses
   madexcept;
 
-function TestTdJSON.loadFile(const AFilename: string): string;
-var
-  jsonFile: TextFile;
-  text: string;
-begin
-  result := '';
-
-  AssignFile(jsonFile, AFilename);
-  try
-    Reset(jsonFile);
-
-    while not Eof(jsonFile) do
-    begin
-      ReadLn(jsonFile, text);
-      result := result+text;
-    end;
-  finally
-    CloseFile(jsonFile);
-  end;
-end;
-
 procedure TestTdJSON.TestEmptyDict;
 begin
   try
-  with TdJSON.Parse(loadFile('test7.json')) do
+  with TdJSON.ParseFile('test7.json') do
   begin
     try
       check(_['QueryResponse']['Item'][0]['Name'].AsString = 'Advance', 'Name is not Advance');
@@ -73,7 +50,7 @@ begin
       Free;
     end;
   end;
-  with TdJSON.Parse(loadFile('test8.json')) do
+  with TdJSON.ParseFile('test8.json') do
   begin
     try
       check(_['results'].Items.Count = 0);
@@ -90,7 +67,7 @@ end;
 procedure TestTdJSON.TestEmptyList;
 begin
   try
-  with TdJSON.Parse(loadFile('test4.json')) do
+  with TdJSON.ParseFile('test4.json') do
   begin
     try
       check(IsList = false, 'isList is not false');
@@ -101,7 +78,7 @@ begin
       Free;
     end;
   end;
-  with TdJSON.Parse(loadFile('test5.json')) do
+  with TdJSON.ParseFile('test5.json') do
   begin
     try
       check(IsList = true, 'isList is not true');
@@ -119,7 +96,7 @@ end;
 
 procedure TestTdJSON.TestListInListInList;
 begin
-  with TdJSON.Parse(loadFile('test3.json')) do
+  with TdJSON.ParseFile('test3.json') do
   begin
     try
       check(_[0].IsList = true);
@@ -133,7 +110,7 @@ end;
 procedure TestTdJSON.TestMovie;
 begin
   try
-  with TdJSON.Parse(loadFile('test6.json')) do
+  with TdJSON.ParseFile('test6.json') do
   try
     check(_['page'].AsInteger = 1);
     check(_['results'][0]['id'].AsInteger = 262543);
@@ -203,7 +180,7 @@ var
   d: double;
 begin
   try
-  with TdJSON.Parse(loadFile('test1.json')) do
+  with TdJSON.ParseFile('test1.json') do
   begin
     try
       Check(_['username'].AsString = 'thomas', _['username'].AsString + ' is not thomas');
@@ -266,7 +243,7 @@ var
   i: integer;
 begin
   try
-  users := TdJSON.Parse(loadFile('test2.json'));
+  users := TdJSON.ParseFile('test2.json');
   try
     check(users.ListItems.Count = 3, format('%d is not 3', [users.ListItems.Count]));
     for i in [0,1,2] do

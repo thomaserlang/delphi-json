@@ -65,6 +65,7 @@ type
       destructor Destroy; override;
       function GetEnumerator: TList<TdJSON>.TEnumerator;
       class function Parse(const AJSON: string): TdJSON;
+      class function ParseFile(const APath: string): TdJSON;
 
       function AsJSONString(FancyFormat: Boolean = true; SpaceChar: String = #09): String;
 
@@ -492,6 +493,26 @@ begin
       end;
     end;
   end;
+end;
+
+class function TdJSON.ParseFile(const APath: string): TdJSON;
+var
+  f: TextFile;
+  r, t: string;
+begin
+  t := '';
+  AssignFile(f, APath);
+  try
+    Reset(f);
+    while not Eof(f) do
+    begin
+      ReadLn(f, t);
+      r := r+t;
+    end;
+  finally
+    CloseFile(f);
+  end;
+  Result := Parse(r);
 end;
 
 { TJSONItems }
