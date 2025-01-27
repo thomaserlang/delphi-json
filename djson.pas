@@ -68,6 +68,7 @@ type
       class function ParseFile(const APath: string): TdJSON;
 
       function AsJSONString(FancyFormat: Boolean = true; SpaceChar: String = #09): String;
+      function AsXMLString(Name : string; Indent : integer): String;
 
       property Parent: TdJSON read FParent;
       property IsList: boolean read FIsList;
@@ -103,6 +104,71 @@ uses
 function TdJSON.AsJSONString(FancyFormat: Boolean; SpaceChar: String): String;
 begin
   Result := jsonString(FancyFormat, 0, SpaceChar);
+end;
+
+function TdJSON.AsXMLString(Name : string; Indent: integer): String;
+var
+  sub: TPair<string, TdJSON>;
+  CrLfStr : string;
+  iIndentBy, i : integer;
+
+  function StrToXML(Str: string): string;
+  Var SB : TStringBuilder;
+  begin
+
+    try
+      SB := TStringBuilder.Create;
+      SB.Append(str);
+
+      SB.Replace('&', '&amp;');
+      SB.Replace('<', '&lt;');
+      SB.Replace('>', '&gt;');
+      SB.Replace('"', '&quot;');
+      SB.Replace('''', '&apos;');
+      SB.Replace(#10, '&#10;');
+      SB.Replace(#13, '&#13;');
+
+      result := SB.ToString;
+    finally
+      FreeAndNil(SB);
+    end;
+
+  end;
+
+begin
+
+  iIndentBy := 2;
+  CrLfStr := #13#10;
+
+  if FIsList then
+  begin
+    Result := StringOfChar(#32, Indent) + '<' + name + '>';
+    for i := 0 to FListItems.Count - 1 do
+      Result := Result + CrLfStr + FListItems[i].AsXMLString('Node' + IntToStr(i), Indent + iIndentBy);
+    Result := Result + CrLfStr + StringOfChar(#32, Indent) + '</' + name + '>';
+  end
+  else if FIsDict then
+  begin
+    Result := StringOfChar(#32, Indent) + '<' + name + '>';
+    for sub in Items do
+      Result := Result + CrLfStr + sub.Value.AsXMLString(sub.Key, Indent + iIndentBy);
+    Result := Result + CrLfStr + StringOfChar(#32, Indent) + '</' + name + '>';
+  end
+  else
+  begin
+    case VarType(FValue) of
+      varNull: Result := 'null';
+      varInteger, varDouble: Result := VarToStr(FValue);
+      varBoolean: Result := AnsiLowerCase(VarToStr(FValue));
+      varString, varUString: Result := StrToXML(VarToStr(FValue));
+      else Result := 'ERROR';
+    end;
+    if Result = '' then
+      Result := StringOfChar(#32, Indent) + '<' + name + '/>'
+    else
+      Result := StringOfChar(#32, Indent) + '<' + name + '>' + Result + '</' + name + '>';
+  end
+
 end;
 
 constructor TdJSON.Create(AParent: TdJSON);
@@ -551,4 +617,3 @@ initialization
   end;
 
 end.
-
