@@ -166,7 +166,7 @@ begin
     if Result = '' then
       Result := StringOfChar(#32, Indent) + '<' + name + '/>'
     else
-      Result := StringOfChar(#32, Indent) + '<' + name + '>' + Result + '</' + name + '>';
+      Result := StringOfChar(#32, Indent) + '<' + name + '>' + StrToXML(Result) + '</' + name + '>';
   end
 
 end;
