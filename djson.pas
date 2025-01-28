@@ -160,7 +160,7 @@ begin
       varNull: Result := 'null';
       varInteger, varDouble: Result := VarToStr(FValue);
       varBoolean: Result := AnsiLowerCase(VarToStr(FValue));
-      varString, varUString: Result := StrToXML(VarToStr(FValue));
+      varString, varUString: Result := VarToStr(FValue);
       else Result := 'ERROR';
     end;
     if Result = '' then
